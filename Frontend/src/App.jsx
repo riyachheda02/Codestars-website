@@ -1,122 +1,127 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React, { useState, useEffect, useCallback } from 'react';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import Events from './pages/Events';
+import Team from './pages/Team';
+import Resources from './pages/Resources';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function getRouteFromLocation() {
+  const hash = (window.location.hash || '').toLowerCase();
+  const path = (window.location.pathname || '').toLowerCase();
+  if (hash.includes('event') || path.includes('event')) {
+    return 'events';
+  }
+  if (hash.includes('team') || path.includes('team')) {
+    return 'team';
+  }
+  if (hash.includes('resource') || path.includes('resource')) {
+    return 'resources';
+  }
+  return 'home';
 }
 
-export default App
+function App() {
+  const [currentRoute, setCurrentRoute] = useState(getRouteFromLocation);
+  const [selectedYear, setSelectedYear] = useState('2026');
+
+  const navigateTo = useCallback((route) => {
+    const r = (route || '').toLowerCase();
+    if (r.includes('event')) {
+      if (window.location.hash !== '#events') window.location.hash = '#events';
+      setCurrentRoute('events');
+    } else if (r.includes('team')) {
+      if (window.location.hash !== '#team') window.location.hash = '#team';
+      setCurrentRoute('team');
+    } else if (r.includes('resource')) {
+      if (window.location.hash !== '#resources') window.location.hash = '#resources';
+      setCurrentRoute('resources');
+    } else {
+      if (window.location.hash !== '' && window.location.hash !== '#') window.location.hash = '#';
+      setCurrentRoute('home');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const nextRoute = getRouteFromLocation();
+      setCurrentRoute(nextRoute);
+    };
+
+    window.addEventListener('hashchange', handleLocationChange);
+    window.addEventListener('popstate', handleLocationChange);
+
+    // Intercept any link clicks pointing to team/events/home across all components
+    const handleDocumentClick = (e) => {
+      const anchor = e.target.closest('a');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href') || '';
+
+      if (
+        href === '#team' ||
+        href === '#teams' ||
+        href === '#/team' ||
+        href === '#/teams' ||
+        href.includes('/team')
+      ) {
+        e.preventDefault();
+        navigateTo('team');
+      } else if (
+        href === '#events' ||
+        href === '#/events' ||
+        href.includes('/events')
+      ) {
+        e.preventDefault();
+        navigateTo('events');
+      } else if (
+        href === '#resources' ||
+        href === '#/resources' ||
+        href.includes('/resources')
+      ) {
+        e.preventDefault();
+        navigateTo('resources');
+      } else if (href === '#home' || href === '#hero') {
+        const route = getRouteFromLocation();
+        if (route !== 'home') {
+          e.preventDefault();
+          navigateTo('home');
+        }
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick, true);
+
+    return () => {
+      window.removeEventListener('hashchange', handleLocationChange);
+      window.removeEventListener('popstate', handleLocationChange);
+      document.removeEventListener('click', handleDocumentClick, true);
+    };
+  }, [navigateTo]);
+
+  return (
+    <div className="app-shell">
+      <Navbar
+        currentRoute={currentRoute}
+        onNavigate={navigateTo}
+        selectedYear={selectedYear}
+        onYearChange={setSelectedYear}
+      />
+      <main className="app-main-content">
+        {currentRoute === 'events' && <Events onNavigate={navigateTo} />}
+        {currentRoute === 'team' && <Team onNavigate={navigateTo} />}
+        {currentRoute === 'resources' && <Resources onNavigate={navigateTo} />}
+        {currentRoute === 'home' && (
+          <Home
+            onNavigate={navigateTo}
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+          />
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default App;
+
