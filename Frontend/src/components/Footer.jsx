@@ -193,12 +193,12 @@ export default function Footer({ onNavigate }) {
       </div>
 
       {/* ── Giant Brand Row across the bottom ── */}
-      <div className="footer-giant-brand-row">
+      {/* <div className="footer-giant-brand-row">
         <span className="footer-giant-brand">CODESTARS</span>
-      </div>
+      </div> */}
 
       {/* ── Bottom Strip ── */}
-      <div className="footer-bottom-strip">
+      {/* <div className="footer-bottom-strip">
         <span className="footer-bottom-copyright">
           © 2026 DJS CodeStars — The Official Competitive Programming Committee of DJSCE. All Rights Reserved.
         </span>
@@ -207,7 +207,7 @@ export default function Footer({ onNavigate }) {
             Back to Top ↑
           </button>
         </div>
-      </div>
+      </div> */}
     </footer>
   );
 }
