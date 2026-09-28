@@ -1,0 +1,276 @@
+/* =========================================================
+   DJS CODESTARS — GLOBAL STICKY NAVBAR COMPONENT
+   Consistent navigation across all pages (Home, Events, Resources, Team)
+   Sticky at top: stays visible while scrolling
+   ========================================================= */
+
+.app-navbar-sticky {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 9999;
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  align-items: center;
+  padding: 14px 44px;
+  background: rgba(8, 8, 12, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+}
+
+/* ─── Left: Brand ─── */
+.app-nav-brand {
+  display: flex;
+  align-items: center;
+}
+
+.app-nav-brand a {
+  font-family: var(--font-display, var(--font-main, 'Plus Jakarta Sans', sans-serif));
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.app-nav-brand a:hover {
+  color: #ffa600;
+  text-shadow: 0 0 16px rgba(255, 166, 0, 0.4);
+}
+
+/* ─── Center: Menu with Logo ─── */
+.app-nav-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.app-nav-link {
+  font-family: var(--font-main, 'Plus Jakarta Sans', sans-serif);
+  font-weight: 500;
+  font-size: 13.5px;
+  letter-spacing: 0.03em;
+  color: #9696a4;
+  text-decoration: none;
+  position: relative;
+  padding: 6px 0;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.app-nav-link:hover {
+  color: #ffffff;
+}
+
+/* Active page indicator */
+.app-nav-link.active {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.app-nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ffa600;
+  box-shadow: 0 0 10px rgba(255, 166, 0, 0.85);
+  border-radius: 2px;
+}
+
+/* Center circular CodeStars logo */
+.app-nav-logo-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #000000;
+  border: 2px solid rgba(255, 166, 0, 0.45);
+  box-shadow: 0 0 16px rgba(255, 166, 0, 0.25);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.app-nav-logo-circle:hover {
+  transform: scale(1.12);
+  border-color: #ffa600;
+  box-shadow: 0 0 22px rgba(255, 166, 0, 0.5);
+}
+
+.app-nav-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── Right: Controls ─── */
+.app-nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.app-nav-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+}
+
+/* Year switcher */
+.app-nav-year-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-year-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #606070;
+}
+
+.app-year-toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-year-btn {
+  background: none;
+  border: none;
+  color: #727284;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.app-year-btn:hover {
+  color: #ffffff;
+}
+
+.app-year-btn.active {
+  color: #ffa600;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(255, 166, 0, 0.4);
+}
+
+.app-year-divider {
+  color: #383844;
+  font-size: 11px;
+}
+
+/* Back to Home Button */
+.app-nav-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #ffa600;
+  background: rgba(255, 166, 0, 0.08);
+  border: 1px solid rgba(255, 166, 0, 0.25);
+  padding: 7px 14px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.app-nav-back-btn:hover {
+  background: #ffa600;
+  color: #080808;
+  transform: translateX(-2px);
+  box-shadow: 0 0 16px rgba(255, 166, 0, 0.4);
+}
+
+/* ─── Responsive Media Queries ─── */
+@media (max-width: 960px) {
+  .app-navbar-sticky {
+    grid-template-columns: 140px 1fr 140px;
+    padding: 12px 20px;
+  }
+  .app-nav-center {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 780px) {
+  .app-navbar-sticky {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    padding: 10px 16px;
+    gap: 9px;
+    position: sticky;
+  }
+  .app-nav-menu-toggle { display: inline-flex; order: 3; }
+  .app-nav-center {
+    display: none;
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 0;
+    right: 0;
+    z-index: 2;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 8px 16px 14px;
+    background: rgba(8, 8, 12, 0.98);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 18px 28px rgba(0, 0, 0, 0.35);
+  }
+  .app-nav-center.is-open { display: flex; }
+  .app-nav-link {
+    padding: 11px 4px;
+    font-size: 14px;
+  }
+  .app-nav-logo-circle {
+    order: -1;
+    align-self: center;
+    width: 36px;
+    height: 36px;
+    margin: 4px 0 8px;
+  }
+  .app-nav-right { order: 2; }
+  /* The archive selector is available on larger screens; it is intentionally
+     removed on phones to keep the header focused and compact. */
+  .app-nav-year-switcher { display: none; }
+}
+
+@media (max-width: 380px) {
+  .app-navbar-sticky { padding-inline: 12px; }
+  .app-nav-brand a { font-size: 13px; }
+  .app-nav-back-btn { padding: 8px 9px; }
+  .app-nav-back-btn span { display: none; }
+}

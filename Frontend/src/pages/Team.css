@@ -1,0 +1,688 @@
+/* =========================================================
+   DJS CODESTARS — TEAM PAGE (EDITORIAL POSTER AESTHETIC)
+   - Background: Identical to Events Page
+   - Header: Single-line "Meet Our Team" with corner bracket frame & brush script
+   - Cards: Alternating Black & Orange Poster blocks with circular studio portraits
+   - Clean, professional, no doodles
+   ========================================================= */
+
+.team-page-root {
+  min-height: 100vh;
+  background-color: #080808;
+  color: #ffffff;
+  font-family: var(--font-main, 'Plus Jakarta Sans', sans-serif);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────
+   BACKGROUND AMBIENCE (Exact match with Events Page)
+   ───────────────────────────────────────────────────────── */
+.team-bg-fixed {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.team-grid-layer {
+  position: absolute;
+  inset: -80px;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center center;
+  mask-image: radial-gradient(circle at 50% 25%, black 40%, transparent 85%);
+  -webkit-mask-image: radial-gradient(circle at 50% 25%, black 40%, transparent 85%);
+  opacity: 0.75;
+}
+
+.team-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+}
+
+.team-orb-1 {
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 650px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 166, 0, 0.18) 0%, transparent 70%);
+  opacity: 0.5;
+}
+
+.team-orb-2 {
+  top: 55%;
+  right: -100px;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(255, 166, 0, 0.12) 0%, transparent 70%);
+  opacity: 0.35;
+}
+
+.team-scanline {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.3) 51%);
+  background-size: 100% 4px;
+  opacity: 0.25;
+}
+
+/* ─────────────────────────────────────────────────────────
+   STICKY NAVBAR
+   ───────────────────────────────────────────────────────── */
+.team-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  align-items: center;
+  padding: 18px 48px;
+  background: rgba(8, 8, 8, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 960px) {
+  .team-nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 20px;
+  }
+}
+
+.team-nav-brand a {
+  font-family: var(--font-display, var(--font-main));
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  transition: color 0.2s ease;
+}
+
+.team-nav-brand a:hover {
+  color: #ffa600;
+}
+
+.team-nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+@media (max-width: 800px) {
+  .team-nav-links {
+    display: none;
+  }
+}
+
+.team-nl {
+  font-family: var(--font-main);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: #94949e;
+  transition: color 0.2s ease;
+  padding: 4px 0;
+  position: relative;
+}
+
+.team-nl:hover {
+  color: #ffffff;
+}
+
+.team-nl.active {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.team-nl.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ffa600;
+  box-shadow: 0 0 10px rgba(255, 166, 0, 0.8);
+}
+
+.team-logo-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid rgba(255, 166, 0, 0.45);
+  box-shadow: 0 0 16px rgba(255, 166, 0, 0.25);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.team-logo-wrap:hover {
+  transform: scale(1.12);
+  border-color: #ffa600;
+  box-shadow: 0 0 22px rgba(255, 166, 0, 0.5);
+}
+
+.team-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-nav-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.team-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffa600;
+  background: rgba(255, 166, 0, 0.08);
+  border: 1px solid rgba(255, 166, 0, 0.25);
+  padding: 7px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.team-back-btn:hover {
+  background: #ffa600;
+  color: #080808;
+  transform: translateX(-3px);
+  box-shadow: 0 0 15px rgba(255, 166, 0, 0.4);
+}
+
+/* ─────────────────────────────────────────────────────────
+   HERO POSTER TITLE (Center Aligned, Matching Events Typography)
+   ───────────────────────────────────────────────────────── */
+.team-poster-hero {
+  position: relative;
+  z-index: 1;
+  padding: 75px 24px 45px;
+  text-align: center;
+}
+
+.team-poster-hero-inner {
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+/* Eyebrow Badge Pill */
+.team-eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #ffa600;
+  background: rgba(255, 166, 0, 0.1);
+  border: 1px solid rgba(255, 166, 0, 0.28);
+  padding: 5px 16px;
+  border-radius: 100px;
+  margin-bottom: 6px;
+}
+
+/* Single-Line Center Aligned Title ("Meet Our Team") */
+.team-poster-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 auto;
+  font-family: var(--font-display), var(--font-main);
+  font-size: clamp(2.8rem, 7.5vw, 5.2rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  text-align: center;
+  flex-wrap: wrap;
+}
+
+.title-meet {
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+/* Yellow Accent for "Team" matching footer (#ffa600) and Events title glow */
+.title-team {
+  color: #ffa600;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 50px rgba(255, 166, 0, 0.45);
+}
+
+/* Center Accent Underline Bar */
+.team-title-bar {
+  width: 58px;
+  height: 3.5px;
+  background: #ffa600;
+  box-shadow: 0 0 14px rgba(255, 166, 0, 0.6);
+  border-radius: 2px;
+  margin: 6px auto 8px;
+}
+
+.team-poster-subtitle {
+  font-family: var(--font-main);
+  font-size: clamp(14.5px, 1.8vw, 16.5px);
+  color: #9c9cae;
+  max-width: 680px;
+  line-height: 1.65;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Batch Toggle Tabs (Center Aligned) */
+.team-year-toggle-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.team-year-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 16, 22, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 5px 6px;
+  border-radius: 100px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.team-year-tab {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #8c8c9a;
+  background: transparent;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.team-year-tab:hover {
+  color: #ffffff;
+}
+
+.team-year-tab.active {
+  color: #080808;
+  background: #ffa600;
+  font-weight: 800;
+  box-shadow: 0 0 16px rgba(255, 166, 0, 0.45);
+}
+
+/* ─────────────────────────────────────────────────────────
+   MAIN CONTENT & TIER BLOCKS
+   ───────────────────────────────────────────────────────── */
+.team-poster-main {
+  position: relative;
+  z-index: 1;
+  padding: 20px 0 120px;
+}
+
+.team-poster-container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 52px;
+}
+
+@media (max-width: 768px) {
+  .team-poster-container {
+    padding: 0 16px;
+    gap: 42px;
+  }
+}
+
+.team-tier-block {
+  width: 100%;
+}
+
+.team-tier-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.team-tier-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ffa600;
+  white-space: nowrap;
+}
+
+.team-tier-rule {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, rgba(255, 166, 0, 0.3) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%);
+}
+
+/* ─────────────────────────────────────────────────────────
+   POSTER MEMBER CARDS GRID (Reference Photo Layout)
+   ───────────────────────────────────────────────────────── */
+.team-poster-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.team-poster-grid.grid-single {
+  grid-template-columns: minmax(280px, 380px);
+  justify-content: center;
+}
+
+.team-poster-grid.grid-double {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 680px) {
+  .team-poster-grid.grid-double {
+    grid-template-columns: 1fr;
+  }
+}
+
+.team-poster-grid.grid-multi {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 940px) {
+  .team-poster-grid.grid-multi {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .team-poster-grid.grid-multi {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   CARD THEMES: ALTERNATING DARK & ORANGE (Reference Photo)
+   ───────────────────────────────────────────────────────── */
+.poster-member-card {
+  border-radius: 16px;
+  padding: 32px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s ease,
+              border-color 0.28s ease;
+}
+
+.poster-member-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
+}
+
+/* 1. BLACK THEME CARD (From Reference Photo) */
+.poster-member-card.card-dark {
+  background: #0d0d12;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.poster-member-card.card-dark:hover {
+  border-color: rgba(255, 166, 0, 0.45);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+}
+
+.poster-member-card.card-dark .poster-avatar-backdrop {
+  background: #1c1c24;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.poster-member-card.card-dark .poster-name {
+  color: #ffffff;
+}
+
+.poster-member-card.card-dark .poster-underline {
+  background: #ffa600;
+  box-shadow: 0 0 8px rgba(255, 166, 0, 0.35);
+}
+
+.poster-member-card.card-dark .poster-role {
+  color: #9c9cae;
+}
+
+.poster-member-card.card-dark .poster-linkedin-link {
+  background: rgba(255, 166, 0, 0.12);
+  color: #ffa600;
+  border: 1px solid rgba(255, 166, 0, 0.3);
+}
+
+.poster-member-card.card-dark .poster-linkedin-link:hover {
+  background: #ffa600;
+  color: #080808;
+}
+
+/* 2. YELLOW THEME CARD (Matches Footer's #ffa600) */
+.poster-member-card.card-yellow,
+.poster-member-card.card-orange {
+  background: #ffa600;
+  border: 1px solid rgba(255, 166, 0, 0.7);
+  box-shadow: 0 14px 34px rgba(255, 166, 0, 0.22);
+}
+
+.poster-member-card.card-yellow:hover,
+.poster-member-card.card-orange:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 50px rgba(255, 166, 0, 0.45);
+}
+
+.poster-member-card.card-yellow .poster-avatar-backdrop,
+.poster-member-card.card-orange .poster-avatar-backdrop {
+  background: #121217;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.poster-member-card.card-yellow .poster-name,
+.poster-member-card.card-orange .poster-name {
+  color: #08080a;
+}
+
+.poster-member-card.card-yellow .poster-underline,
+.poster-member-card.card-orange .poster-underline {
+  background: #08080a;
+}
+
+.poster-member-card.card-yellow .poster-role,
+.poster-member-card.card-orange .poster-role {
+  color: rgba(8, 8, 10, 0.85);
+  font-weight: 600;
+}
+
+.poster-member-card.card-yellow .poster-linkedin-link,
+.poster-member-card.card-orange .poster-linkedin-link {
+  background: #08080a;
+  color: #ffa600;
+}
+
+.poster-member-card.card-yellow .poster-linkedin-link:hover,
+.poster-member-card.card-orange .poster-linkedin-link:hover {
+  background: #ffffff;
+  color: #08080a;
+}
+
+/* ─────────────────────────────────────────────────────────
+   CIRCULAR AVATAR (Reference Photo Studio Style)
+   ───────────────────────────────────────────────────────── */
+.poster-avatar-frame {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.poster-avatar-backdrop {
+  width: 135px;
+  height: 135px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: transform 0.35s ease;
+}
+
+.poster-member-card:hover .poster-avatar-backdrop {
+  transform: scale(1.04);
+}
+
+.poster-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.poster-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.poster-initials {
+  font-family: var(--font-display), 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  opacity: 0.95;
+}
+
+.poster-member-card.card-dark .poster-initials {
+  color: #ffffff;
+}
+
+.poster-member-card.card-yellow .poster-initials,
+.poster-member-card.card-orange .poster-initials {
+  color: #ffa600;
+}
+
+.poster-user-silhouette {
+  position: absolute;
+  bottom: 8px;
+  opacity: 0.25;
+}
+
+.poster-member-card.card-dark .poster-user-silhouette {
+  color: #ffffff;
+}
+
+.poster-member-card.card-yellow .poster-user-silhouette,
+.poster-member-card.card-orange .poster-user-silhouette {
+  color: #ffa600;
+}
+
+/* ─────────────────────────────────────────────────────────
+   NAME & ROLE UNDERLINE (From Reference Photo)
+   ───────────────────────────────────────────────────────── */
+.poster-meta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.poster-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.poster-name {
+  font-family: var(--font-display), var(--font-main);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+/* Small Accent Underline Bar (from Reference Photo) */
+.poster-underline {
+  width: 44px;
+  height: 2.5px;
+  border-radius: 1px;
+  margin: 6px 0 8px;
+}
+
+.poster-role {
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.poster-linkedin-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.poster-linkedin-link:hover {
+  transform: scale(1.2);
+}
+
+@media (max-width: 480px) {
+  .team-poster-hero { padding: 48px 16px 32px; }
+  .team-eyebrow-pill { font-size: 9px; letter-spacing: 0.14em; padding: 5px 10px; }
+  .team-poster-title { font-size: clamp(2.35rem, 13vw, 3.4rem); gap: 8px; }
+  .team-poster-subtitle { font-size: 14px; }
+  .team-year-tab { padding: 7px 14px; }
+  .team-poster-main { padding-bottom: 64px; }
+  .team-poster-container { padding: 0 16px; gap: 34px; }
+  .team-tier-badge-row { gap: 10px; margin-bottom: 16px; }
+  .team-tier-eyebrow { font-size: 10px; letter-spacing: 0.13em; }
+  .poster-member-card { padding: 24px 18px 22px; }
+  .poster-avatar-backdrop { width: 112px; height: 112px; }
+}
