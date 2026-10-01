@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { photosByYear } from '../constant/photos';
-import codestarsLogo from '../assets/djs_codestarsLogo.jpeg';
 import ScatteredGallery from '../components/ScatteredGallery';
 import Footer from '../components/Footer';
 import './Home.css';
@@ -150,7 +149,7 @@ export default function Home({ onNavigate, selectedYear: propYear, onYearChange 
       shortDesc: 'Important Update! The Introduction to CodeStars session has been rescheduled to 2nd October 2025 at 11:00 PM. Mark your calendars and don\'t miss this exciting opportunity to learn about CodeStars and the amazing roles we\'re recruiting for!',
       fullDesc: 'We apologize for any inconvenience caused by this schedule change. The new timing will allow more students to attend and learn about the exciting opportunities at CodeStars. 📅 New Date: 2nd October 2025 🕚 New Time: 11:00 PM All other events remain as scheduled. We look forward to seeing you there! ',
       linkUrl: '#experience',
-      
+
     },
     {
       id: 'ann-2',
@@ -278,13 +277,11 @@ We are organizing an Intro Session on 2nd October 2025 at 11:00 PM and Mock Cont
           />
         )}
 
-        {/* Center Hero Typography (Center Aligned: DJS CodeStars) */}
-        <div className="hero-center-content hero-center-aligned">
-          <h1 className="hero-giant-heading text-center">
-            <span className="hero-word hero-word-djs uppercase-djs">DJS</span>
-            <span className="hero-word hero-word-codestars">CodeStars</span>
-          </h1>
-        </div>
+        {/* The visible title is the scroll-driven element in the navbar. */}
+        <h1 className="sr-only">DJS CodeStars</h1>
+
+        {/* Preserves the original hero composition while the visible title is fixed. */}
+        <div className="hero-title-spacer" aria-hidden="true" />
 
         {/* Hero Bottom Bar (Centered Tagline) */}
         <div className="hero-bottom-bar-clean">
@@ -323,9 +320,8 @@ We are organizing an Intro Session on 2nd October 2025 at 11:00 PM and Mock Cont
                         <h3 className="announcement-heading">{ann.title}</h3>
                         {/* Corner Status Badge (UPDATE = Yellow, EVENT = Blue) */}
                         <span
-                          className={`announcement-type-badge ${
-                            isUpdate ? 'badge-update-yellow' : 'badge-event-blue'
-                          }`}
+                          className={`announcement-type-badge ${isUpdate ? 'badge-update-yellow' : 'badge-event-blue'
+                            }`}
                         >
                           {ann.type}
                         </span>
