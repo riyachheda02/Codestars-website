@@ -1,0 +1,80 @@
+/* Fixed Hero Wordmark Layer */
+.hero-wordmark-fixed-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 990;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: opacity 0.2s ease;
+}
+
+.hero-wordmark-fixed-layer.is-preview-mode {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  margin-bottom: 24px;
+}
+
+.hero-wordmark-particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  transition: opacity 0.2s linear;
+}
+
+/* Crisp solid text overlay (for scroll merge crossfade) */
+.hero-wordmark-solid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  transition: opacity 0.15s linear;
+}
+
+.solid-djs-line {
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(245, 185, 58, 0.45);
+}
+
+.solid-codestars-line {
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  margin-top: 14px;
+  text-shadow:
+    0 0 24px rgba(245, 185, 58, 0.55),
+    0 4px 16px rgba(0, 0, 0, 0.9);
+}
+
+/* Reduced motion static fallback */
+.hero-wordmark-static-fallback {
+  display: flex;
+  flex-direction: column;
+}
+
+.fallback-prefix-djs {
+  font-size: clamp(14px, 1.8vw, 22px);
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.fallback-wordmark-codestars {
+  font-size: clamp(46px, 9vw, 94px);
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: -0.025em;
+  text-shadow: 0 0 24px rgba(245, 185, 58, 0.4);
+}

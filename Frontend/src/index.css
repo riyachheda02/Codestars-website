@@ -1,24 +1,42 @@
 :root {
-  --bg-primary: #080808;
-  --bg-card: rgba(18, 18, 18, 0.85);
-  --text-primary: #ffffff;
-  --text-secondary: #8e8e93;
-  --text-muted: #55555c;
-  --accent-orange: #ffa600;
-  --accent-orange-glow: rgba(255, 166, 0, 0.25);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.2);
+  /* Palette (dual-tone: black plus a deep warm glow, like the reference's teal on black) */
+  --bg: #0A0A0A;
+  --bg-warm: #1A1208;
+  --bg-warm-2: #2A1C0A;
+  --gold: #F5B93A;
+  --gold-soft: rgba(245, 185, 58, 0.12);
+  --glow: rgba(245, 185, 58, 0.16);
+  --surface: rgba(30, 22, 10, 0.55);
+  --border: rgba(245, 185, 58, 0.18);
+  --text: #EDEDED;
+  --muted: #9A9384;
 
-  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Plus Jakarta Sans', 'Syne', sans-serif;
-  --font-mono: 'Space Grotesk', ui-monospace, monospace;
+  /* Typography */
+  --font-hero: 'Orbitron', 'Eurostile', 'Segoe UI', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
-  font-family: var(--font-main);
+  /* Backward compatibility for inner pages */
+  --bg-primary: var(--bg);
+  --bg-card: rgba(26, 18, 8, 0.7);
+  --text-primary: var(--text);
+  --text-secondary: var(--muted);
+  --text-muted: #7A7365;
+  --accent-orange: var(--gold);
+  --accent-orange-glow: var(--glow);
+  --border-subtle: var(--border);
+  --border-hover: rgba(245, 185, 58, 0.35);
+
+  --font-main: var(--font-body);
+  --font-display: var(--font-serif);
+
+  font-family: var(--font-body);
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
+  color: var(--text);
+  background-color: var(--bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -54,43 +72,6 @@ html, body {
   font-family: var(--font-main);
 }
 
-@media (pointer: fine) {
-  html, body, a, button, input, textarea, select {
-    cursor: none;
-  }
-}
-
-.site-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 20000;
-  width: 21px;
-  height: 21px;
-  margin: -10.5px 0 0 -10.5px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 160ms ease, border-color 160ms ease;
-}
-
-.site-cursor.is-visible {
-  opacity: 1;
-}
-
-.site-cursor-dot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #ffa600;
-  box-shadow: 0 0 7px rgba(255, 166, 0, 0.9);
-  transform: translate(-50%, -50%);
-}
-
 .page-jump-button {
   position: fixed;
   z-index: 10003;
@@ -120,10 +101,6 @@ html, body {
 }
 
 @media (max-width: 780px), (pointer: coarse) {
-  .site-cursor {
-    display: none;
-  }
-
   .page-jump-button {
     bottom: 18px;
   }
