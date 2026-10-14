@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Menu, X } from 'lucide-react';
+import codestarsLogo from '../assets/djs_codestarsLogo.jpeg';
 import './Navbar.css';
 
 export default function Navbar({
@@ -25,7 +26,7 @@ export default function Navbar({
         fontSize: '11px',
         letterSpacing: '-0.02em',
       });
-      setNavMotion({ '--title-slot': '92px', '--nav-gap': '29px' });
+      setNavMotion({ '--title-slot': '132px', '--nav-gap': '24px' });
       return undefined;
     }
 
@@ -51,8 +52,8 @@ export default function Navbar({
         letterSpacing: `${-0.045 + 0.025 * eased}em`,
       });
       setNavMotion({
-        '--title-slot': `${92 * eased}px`,
-        '--nav-gap': `${24 + 5 * eased}px`,
+        '--title-slot': `${132 * eased}px`,
+        '--nav-gap': `${24 + 2 * eased}px`,
       });
     };
     const requestUpdate = () => {
@@ -90,6 +91,14 @@ export default function Navbar({
 
   return (
     <header ref={navRef} className="app-navbar-sticky">
+      <a
+        href="#home"
+        className="app-nav-brand app-nav-logo-circle"
+        onClick={(e) => handleNavClick(e, 'home')}
+        aria-label="DJS CodeStars Home"
+      >
+        <img src={codestarsLogo} alt="" className="app-nav-logo-img" />
+      </a>
       <a
         href="#home"
         className={`app-scroll-title ${titleDocked ? 'is-docked' : ''}`}

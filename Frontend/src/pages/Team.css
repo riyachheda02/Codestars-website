@@ -39,32 +39,6 @@
   opacity: 0.75;
 }
 
-.team-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-}
-
-.team-orb-1 {
-  top: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 650px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255, 166, 0, 0.18) 0%, transparent 70%);
-  opacity: 0.5;
-}
-
-.team-orb-2 {
-  top: 55%;
-  right: -100px;
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(circle, rgba(255, 166, 0, 0.12) 0%, transparent 70%);
-  opacity: 0.35;
-}
-
 .team-scanline {
   position: absolute;
   inset: 0;
@@ -232,24 +206,6 @@
   gap: 16px;
 }
 
-/* Eyebrow Badge Pill */
-.team-eyebrow-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #ffa600;
-  background: rgba(255, 166, 0, 0.1);
-  border: 1px solid rgba(255, 166, 0, 0.28);
-  padding: 5px 16px;
-  border-radius: 100px;
-  margin-bottom: 6px;
-}
-
 /* Single-Line Center Aligned Title ("Meet Our Team") */
 .team-poster-title {
   display: inline-flex;
@@ -287,16 +243,6 @@
   box-shadow: 0 0 14px rgba(255, 166, 0, 0.6);
   border-radius: 2px;
   margin: 6px auto 8px;
-}
-
-.team-poster-subtitle {
-  font-family: var(--font-main);
-  font-size: clamp(14.5px, 1.8vw, 16.5px);
-  color: #9c9cae;
-  max-width: 680px;
-  line-height: 1.65;
-  margin: 0 auto;
-  text-align: center;
 }
 
 /* Batch Toggle Tabs (Center Aligned) */
@@ -422,14 +368,20 @@
   grid-template-columns: repeat(3, 1fr);
 }
 
+.team-poster-grid.grid-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 @media (max-width: 940px) {
-  .team-poster-grid.grid-multi {
-    grid-template-columns: repeat(2, 1fr);
+  .team-poster-grid.grid-multi,
+  .team-poster-grid.grid-four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 600px) {
-  .team-poster-grid.grid-multi {
+  .team-poster-grid.grid-multi,
+  .team-poster-grid.grid-four {
     grid-template-columns: 1fr;
   }
 }
@@ -675,9 +627,7 @@
 
 @media (max-width: 480px) {
   .team-poster-hero { padding: 48px 16px 32px; }
-  .team-eyebrow-pill { font-size: 9px; letter-spacing: 0.14em; padding: 5px 10px; }
   .team-poster-title { font-size: clamp(2.35rem, 13vw, 3.4rem); gap: 8px; }
-  .team-poster-subtitle { font-size: 14px; }
   .team-year-tab { padding: 7px 14px; }
   .team-poster-main { padding-bottom: 64px; }
   .team-poster-container { padding: 0 16px; gap: 34px; }

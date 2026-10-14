@@ -4,23 +4,18 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   Trophy,
   Users,
-  Building2,
   Zap,
   Calendar,
   Clock,
-  GraduationCap,
   ArrowRight,
   ExternalLink,
   ChevronRight,
   Star,
   Flame,
-  Code2,
   Coffee,
-  BookOpen,
   ArrowUpRight,
 } from 'lucide-react';
 
-import codestarsLogo from '../assets/djs_codestarsLogo.jpeg';
 import bloodBytesImg from '../assets/events photo/bloody_bites.webp';
 import codeUncodeImg from '../assets/events photo/code_uncode_poolprize.jpg';
 import bountyImg from '../assets/events photo/bounty.webp';
@@ -82,7 +77,6 @@ function StatItem({ stat, visible }) {
 
 export default function Events({ onNavigate }) {
   const rootRef = useRef(null);
-  const heroTitleRef = useRef(null);
   const heroSubRef = useRef(null);
   const statsRef = useRef(null);
   const [statsVisible, setStatsVisible] = React.useState(false);
@@ -91,29 +85,6 @@ export default function Events({ onNavigate }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const ctx = gsap.context(() => {
-      if (heroTitleRef.current) {
-        const text = heroTitleRef.current.textContent;
-        heroTitleRef.current.innerHTML = text
-          .split('')
-          .map((c) => (c === ' ' ? '&nbsp;' : `<span class="ev2-char">${c}</span>`))
-          .join('');
-
-        gsap.fromTo(
-          '.ev2-char',
-          { y: 80, opacity: 0, rotationX: -70 },
-          {
-            y: 0,
-            opacity: 1,
-            rotationX: 0,
-            duration: 0.8,
-            ease: 'back.out(1.4)',
-            stagger: 0.04,
-            delay: 0.2,
-            transformOrigin: 'bottom center',
-          }
-        );
-      }
-
       gsap.fromTo(
         heroSubRef.current,
         { opacity: 0, y: 30 },
@@ -141,36 +112,10 @@ export default function Events({ onNavigate }) {
         onEnter: () => setStatsVisible(true),
       });
 
-      gsap.to('.ev2-grid-layer', {
-        backgroundPositionY: '30%',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: rootRef.current,
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 1,
-        },
-      });
-
-      gsap.to('.ev2-orb-1', { scale: 1.15, opacity: 0.16, duration: 4, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-      gsap.to('.ev2-orb-2', { scale: 1.2, opacity: 0.1, duration: 5, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 1 });
-
-      gsap.to('.ev2-ticker-track', {
-        xPercent: -50,
-        ease: 'none',
-        duration: 20,
-        repeat: -1,
-      });
     }, rootRef);
 
     return () => ctx.revert();
   }, []);
-
-  const handleNavClick = (e, target) => {
-    e.preventDefault();
-    if (onNavigate) onNavigate(target);
-    else window.location.hash = target === 'events' ? '#events' : target === 'team' ? '#team' : '#';
-  };
 
   const stats = [
     { raw: 'Rs.2,50,000+', label: 'Total Prize Pool' },
@@ -274,36 +219,22 @@ export default function Events({ onNavigate }) {
     interaction: 'bc-interaction',
   };
 
-  const tickerText = 'CODE . COMPETE . CONQUER . BLOODBYTES . CODE UNCODE . ICPC CAMP . ';
-
   return (
     <div className="ev2-root" ref={rootRef}>
       {/* Background Ambience */}
       <div className="ev2-bg-fixed">
         <div className="ev2-grid-layer" />
-        <div className="ev2-orb ev2-orb-1" />
-        <div className="ev2-orb ev2-orb-2" />
         <div className="ev2-scanline" />
       </div>
 
       {/* Hero Section */}
       <section className="ev2-hero">
         <div className="ev2-hero-inner">
-          <span className="ev2-eyebrow-pill">
-            <Zap size={11} strokeWidth={2.5} /> CODESTARS
-          </span>
-          <h1 className="ev2-hero-title" ref={heroTitleRef}>
-            presents...
-          </h1>
+          <h1 className="ev2-hero-title">Events</h1>
           <p className="ev2-hero-sub" ref={heroSubRef}>
             Join Mumbai's most prestigious coding competitions. Three epic events designed to
             challenge, inspire, and celebrate the finest programming talent in the region.
           </p>
-        </div>
-        <div className="ev2-ticker-wrap" aria-hidden="true">
-          <div className="ev2-ticker-track">
-            <span>{tickerText.repeat(8)}</span>
-          </div>
         </div>
       </section>
 
@@ -336,8 +267,6 @@ export default function Events({ onNavigate }) {
           </div>
 
           <div className="ev2-feature-card ev2-reveal">
-            <div className="ev2-fc-glow" />
-
             <div className="ev2-fc-badge-row">
               <span className="ev2-fc-badge">
                 <Flame size={12} strokeWidth={2.5} /> FEATURED HALLOWEEN SHOWDOWN
@@ -351,7 +280,7 @@ export default function Events({ onNavigate }) {
               {/* Left Column: Event Photo & Badges */}
               <div className="ev2-fc-media-col">
                 <div className="ev2-fc-img-wrapper">
-                  <img src={bloodBytesImg} alt="BloodBytes Halloween Contest" className="ev2-fc-img" />
+                  <img src={bloodBytesImg} alt="BloodBytes Halloween Contest" className="ev2-fc-img" loading="lazy" decoding="async" />
                   <div className="ev2-fc-img-overlay" />
                   <span className="ev2-fc-live-pill">
                     <span className="ev2-pulse-dot" /> LIVE EVENT
@@ -413,9 +342,6 @@ export default function Events({ onNavigate }) {
       <section className="ev2-previous">
         <div className="ev2-container">
           <div className="ev2-section-head ev2-reveal">
-            <span className="ev2-section-eyebrow">
-              <Trophy size={12} strokeWidth={2.5} /> Hall of Glory
-            </span>
             <h2 className="ev2-section-title">Previous Events</h2>
             <p className="ev2-section-sub">
               Three distinct competitions, each designed to test different aspects of programming excellence
@@ -429,7 +355,7 @@ export default function Events({ onNavigate }) {
 
                 {/* Event Photo Cover */}
                 <div className="ev2-card-thumb-wrap">
-                  <img src={evt.image} alt={evt.title} className="ev2-card-thumb" />
+                  <img src={evt.image} alt={evt.title} className="ev2-card-thumb" loading="lazy" decoding="async" />
                   <div className="ev2-card-thumb-gradient" />
                   <div className="ev2-thumb-badges">
                     <span className={`ev2-badge ${badgeClass[evt.badgeType]}`}>

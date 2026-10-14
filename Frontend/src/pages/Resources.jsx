@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
-  ArrowRight, Search, ExternalLink, Code2, Cpu, Globe,
-  BookOpen, Database, BrainCircuit, Layers, Terminal,
+  Search, ExternalLink, Globe,
+  Database, BrainCircuit, Layers, Terminal,
   SlidersHorizontal, Smartphone, GraduationCap, ChevronRight,
 } from 'lucide-react';
-import codestarsLogo from '../assets/djs_codestarsLogo.jpeg';
 import Footer from '../components/Footer';
 import './Resources.css';
 
@@ -295,18 +294,9 @@ export default function Resources({ onNavigate }) {
   const heroTitleRef = useRef(null);
   const controlsRef = useRef(null);
 
-  const handleNavClick = (e, target) => {
-    e.preventDefault();
-    if (onNavigate) onNavigate(target);
-    else window.location.hash = target === 'events' ? '#events' : target === 'team' ? '#team' : target === 'resources' ? '#resources' : '#';
-  };
-
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const ctx = gsap.context(() => {
-      gsap.to('.res-grid-layer', { backgroundPositionY: '30%', ease: 'none', scrollTrigger: { trigger: rootRef.current, start: 'top top', end: 'bottom bottom', scrub: 1 } });
-      gsap.to('.res-orb-1', { scale: 1.15, opacity: 0.18, duration: 4, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-      gsap.to('.res-orb-2', { scale: 1.2, opacity: 0.12, duration: 5, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 1.2 });
       if (heroTitleRef.current) {
         const chars = heroTitleRef.current.querySelectorAll('.res-char');
         gsap.fromTo(chars, { opacity: 0, y: 55, rotateX: -40 }, { opacity: 1, y: 0, rotateX: 0, duration: 0.65, stagger: 0.04, ease: 'power4.out', delay: 0.2 });
@@ -336,25 +326,17 @@ export default function Resources({ onNavigate }) {
     <div className="res-root" ref={rootRef}>
       <div className="res-bg-fixed">
         <div className="res-grid-layer" />
-        <div className="res-orb res-orb-1" />
-        <div className="res-orb res-orb-2" />
         <div className="res-scanline" />
       </div>
 
       <section className="res-hero">
         <div className="res-hero-inner">
-          <span className="res-eyebrow-pill"><BookOpen size={11} strokeWidth={2.5} /> CURATED FOR CODESTARS</span>
           <h1 className="res-hero-title" ref={heroTitleRef} aria-label="Learning Resources">
             Learning Resources
           </h1>
           <p className="res-hero-sub">
             Discover free, high-quality resources to accelerate your learning journey
           </p>
-        </div>
-        <div className="res-ticker-wrap" aria-hidden="true">
-          <div className="res-ticker-track">
-            <span>{'LEETCODE . FREECODECAMP . FAST.AI . CODEFORCES . MDN WEB DOCS . KAGGLE . ODIN PROJECT . CS50 . REACT . TENSORFLOW . CSS-TRICKS . SQLBOLT . FLUTTER . '.repeat(6)}</span>
-          </div>
         </div>
       </section>
 

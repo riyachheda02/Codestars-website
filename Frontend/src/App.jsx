@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import Navbar from './components/Navbar';
+import ParticleField from './components/ParticleField';
 import Home from './pages/Home';
-import Events from './pages/Events';
-import Team from './pages/Team';
-import Resources from './pages/Resources';
 import './App.css';
+
+const Events = lazy(() => import('./pages/Events'));
+const Team = lazy(() => import('./pages/Team'));
+const Resources = lazy(() => import('./pages/Resources'));
 
 function getRouteFromLocation() {
   const hash = (window.location.hash || '').toLowerCase();
@@ -24,7 +26,6 @@ function getRouteFromLocation() {
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(getRouteFromLocation);
-  const [selectedYear, setSelectedYear] = useState('2026');
   const [cursor, setCursor] = useState({ x: -100, y: -100, visible: false });
   const [atFooter, setAtFooter] = useState(false);
 
@@ -107,7 +108,13 @@ function App() {
     const updateCursor = (event) => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        setCursor({ x: event.clientX, y: event.clientY, visible: true });
+        const hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
+        setCursor({
+          x: event.clientX,
+          y: event.clientY,
+          visible: true,
+          onOrange: Boolean(hoveredElement?.closest('.main-footer')),
+        });
       });
     };
     const hideCursor = () => setCursor((previous) => ({ ...previous, visible: false }));
@@ -140,8 +147,9 @@ function App() {
 
   return (
     <div className="app-shell">
+      <ParticleField />
       <div
-        className={`site-cursor ${cursor.visible ? 'is-visible' : ''}`}
+        className={`site-cursor ${cursor.visible ? 'is-visible' : ''} ${cursor.onOrange ? 'on-orange' : ''}`}
         style={{ transform: `translate3d(${cursor.x}px, ${cursor.y}px, 0)` }}
         aria-hidden="true"
       >
@@ -152,16 +160,12 @@ function App() {
         onNavigate={navigateTo}
       />
       <main className="app-main-content">
-        {currentRoute === 'events' && <Events onNavigate={navigateTo} />}
-        {currentRoute === 'team' && <Team onNavigate={navigateTo} />}
-        {currentRoute === 'resources' && <Resources onNavigate={navigateTo} />}
-        {currentRoute === 'home' && (
-          <Home
-            onNavigate={navigateTo}
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-          />
-        )}
+        <Suspense fallback={<div className="route-loading" aria-hidden="true" />}>
+          {currentRoute === 'events' && <Events onNavigate={navigateTo} />}
+          {currentRoute === 'team' && <Team onNavigate={navigateTo} />}
+          {currentRoute === 'resources' && <Resources onNavigate={navigateTo} />}
+          {currentRoute === 'home' && <Home onNavigate={navigateTo} />}
+        </Suspense>
       </main>
       <button
         type="button"

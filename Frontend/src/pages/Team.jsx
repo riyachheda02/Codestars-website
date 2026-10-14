@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, User, Users } from 'lucide-react';
+import { User } from 'lucide-react';
 
 import { TEAM_YEARS, teamDataByYear } from '../constant/teamData';
-import codestarsLogo from '../assets/djs_codestarsLogo.jpeg';
 import Footer from '../components/Footer';
 import './Team.css';
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* ─── LinkedIn SVG Icon ─── */
 const LinkedinIcon = ({ size = 12, className }) => (
@@ -80,46 +76,10 @@ function PosterMemberCard({ member, isOrangeTheme }) {
 /* ─── Main Team Component ─── */
 export default function Team({ onNavigate }) {
   const [selectedYear, setSelectedYear] = useState('2026-27');
-  const rootRef = useRef(null);
   const sectionsRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    const ctx = gsap.context(() => {
-      // Parallax scroll on grid layer (identical to Events page)
-      gsap.to('.team-grid-layer', {
-        backgroundPositionY: '30%',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: rootRef.current,
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 1,
-        },
-      });
-
-      // Atmospheric pulsating orbs (identical to Events page)
-      gsap.to('.team-orb-1', {
-        scale: 1.15,
-        opacity: 0.16,
-        duration: 4,
-        yoyo: true,
-        repeat: -1,
-        ease: 'sine.inOut',
-      });
-      gsap.to('.team-orb-2', {
-        scale: 1.2,
-        opacity: 0.1,
-        duration: 5,
-        yoyo: true,
-        repeat: -1,
-        ease: 'sine.inOut',
-        delay: 1,
-      });
-    }, rootRef);
-
-    return () => ctx.revert();
   }, []);
 
   // GSAP animation when switching batch years
@@ -139,32 +99,19 @@ export default function Team({ onNavigate }) {
     }
   }, [selectedYear]);
 
-  const handleNavClick = (e, target) => {
-    e.preventDefault();
-    if (onNavigate) onNavigate(target);
-    else window.location.hash = target === 'events' ? '#events' : target === 'team' ? '#team' : '#';
-  };
-
   const currentYearData = teamDataByYear[selectedYear] || teamDataByYear['2026-27'];
 
   return (
-    <div className="team-page-root" ref={rootRef}>
+    <div className="team-page-root">
       {/* ── Background Ambience (Exact same as Events page) ── */}
       <div className="team-bg-fixed">
         <div className="team-grid-layer" />
-        <div className="team-orb team-orb-1" />
-        <div className="team-orb team-orb-2" />
         <div className="team-scanline" />
       </div>
 
       {/* ── Hero Section (Center Aligned, Matching Events Page Typography & Yellow Theme) ── */}
       <section className="team-poster-hero">
         <div className="team-poster-hero-inner">
-          {/* Eyebrow Pill */}
-          <span className="team-eyebrow-pill">
-            <Users size={12} strokeWidth={2.5} /> CODESTARS SQUAD
-          </span>
-
           {/* Main Title (Matching Events Page Font) */}
           <h1 className="team-poster-title">
             <span className="title-meet">Meet Our</span>{' '}
@@ -173,11 +120,6 @@ export default function Team({ onNavigate }) {
 
           {/* Accent Underline Bar */}
           <div className="team-title-bar" />
-
-          {/* Subtitle Description */}
-          <p className="team-poster-subtitle">
-            {currentYearData.tagline} — {currentYearData.subtitle}
-          </p>
 
           {/* Batch Selector Pills */}
           <div className="team-year-toggle-wrap">
@@ -203,6 +145,7 @@ export default function Team({ onNavigate }) {
           {currentYearData.hierarchy.map((group, groupIdx) => {
             const isSingle = group.members.length === 1;
             const isDouble = group.members.length === 2;
+            const isFour = group.members.length === 4;
 
             return (
               <section key={groupIdx} className="team-tier-block">
@@ -215,12 +158,13 @@ export default function Team({ onNavigate }) {
                 {/* Alternating Posters Grid */}
                 <div
                   className={`team-poster-grid ${
-                    isSingle ? 'grid-single' : isDouble ? 'grid-double' : 'grid-multi'
+                    isSingle ? 'grid-single' : isDouble ? 'grid-double' : isFour ? 'grid-four' : 'grid-multi'
                   }`}
                 >
                   {group.members.map((member, mIdx) => {
                     // Alternating theme pattern (0 = dark, 1 = orange, 2 = dark...)
-                    const isOrange = (groupIdx + mIdx) % 2 === 1;
+                    const highlightedMember = ['Devanshi Babariya', 'Mustansir Kanchwala'].includes(member.name);
+                    const isOrange = highlightedMember || (groupIdx + mIdx) % 2 === 1;
 
                     return (
                       <PosterMemberCard

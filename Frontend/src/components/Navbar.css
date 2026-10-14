@@ -79,6 +79,11 @@
 .app-nav-brand {
   display: flex;
   align-items: center;
+  position: absolute;
+  left: 44px;
+  top: 50%;
+  z-index: 10004;
+  transform: translateY(-50%);
 }
 
 .app-nav-brand a {
@@ -180,7 +185,7 @@
 }
 
 .app-nav-logo-circle:hover {
-  transform: scale(1.12);
+  transform: translateY(-50%) scale(1.08);
   border-color: #ffa600;
   box-shadow: 0 0 22px rgba(255, 166, 0, 0.5);
 }
@@ -312,6 +317,16 @@
     position: fixed;
   }
 
+  .app-nav-brand {
+    left: 16px;
+    top: 10px;
+    transform: none;
+  }
+
+  .app-nav-logo-circle:hover {
+    transform: scale(1.08);
+  }
+
   .app-nav-menu-toggle {
     display: inline-flex;
     position: absolute;
@@ -355,17 +370,13 @@
   }
 
   .app-scroll-title {
-    max-width: calc(100vw - 84px);
+    max-width: calc(100vw - 104px);
   }
 }
 
 @media (max-width: 380px) {
   .app-navbar-sticky {
     padding-inline: 12px;
-  }
-
-  .app-nav-brand a {
-    font-size: 13px;
   }
 
   .app-nav-back-btn {

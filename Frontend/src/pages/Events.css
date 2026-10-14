@@ -40,32 +40,6 @@
   opacity: 0.75;
 }
 
-.ev2-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-}
-
-.ev2-orb-1 {
-  top: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 650px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255, 166, 0, 0.18) 0%, transparent 70%);
-  opacity: 0.5;
-}
-
-.ev2-orb-2 {
-  top: 55%;
-  right: -100px;
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(circle, rgba(255, 166, 0, 0.12) 0%, transparent 70%);
-  opacity: 0.35;
-}
-
 .ev2-scanline {
   position: absolute;
   inset: 0;
@@ -229,23 +203,6 @@
   margin: 0 auto;
 }
 
-.ev2-eyebrow-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #ffa600;
-  background: rgba(255, 166, 0, 0.1);
-  border: 1px solid rgba(255, 166, 0, 0.25);
-  padding: 5px 14px;
-  border-radius: 100px;
-  margin-bottom: 20px;
-}
-
 .ev2-hero-title {
   font-family: var(--font-display), var(--font-main);
   font-size: clamp(3.2rem, 9vw, 7.5rem);
@@ -262,11 +219,6 @@
   text-shadow: 0 0 60px rgba(255, 166, 0, 0.3);
 }
 
-.ev2-char {
-  display: inline-block;
-  will-change: transform, opacity;
-}
-
 .ev2-hero-sub {
   font-family: var(--font-main);
   font-size: clamp(15px, 1.8vw, 18px);
@@ -274,27 +226,6 @@
   color: #a4a4b2;
   max-width: 680px;
   margin: 0 auto;
-}
-
-/* Infinite Marquee Ticker */
-.ev2-ticker-wrap {
-  margin-top: 50px;
-  padding: 10px 0;
-  overflow: hidden;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(0, 0, 0, 0.5);
-  white-space: nowrap;
-}
-
-.ev2-ticker-track {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.22);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -464,17 +395,6 @@
 .ev2-feature-card:hover {
   border-color: rgba(255, 166, 0, 0.55);
   box-shadow: 0 30px 75px -10px rgba(0, 0, 0, 0.9), 0 0 45px rgba(255, 166, 0, 0.15);
-}
-
-.ev2-fc-glow {
-  position: absolute;
-  top: -80px;
-  right: -80px;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(255, 166, 0, 0.16) 0%, transparent 70%);
-  filter: blur(40px);
-  pointer-events: none;
 }
 
 .ev2-fc-badge-row {
@@ -965,10 +885,8 @@
 
 @media (max-width: 480px) {
   .ev2-hero { padding: 48px 16px 34px; }
-  .ev2-eyebrow-pill { font-size: 9px; letter-spacing: 0.13em; padding: 5px 10px; }
   .ev2-hero-title { font-size: clamp(2.8rem, 15vw, 4.2rem); margin-bottom: 16px; }
   .ev2-hero-sub { font-size: 14px; }
-  .ev2-ticker-wrap { margin-top: 30px; }
   .ev2-upcoming, .ev2-previous { padding-block: 56px; }
   .ev2-section-head { margin-bottom: 28px; }
   .ev2-section-eyebrow { font-size: 9px; letter-spacing: 0.14em; }

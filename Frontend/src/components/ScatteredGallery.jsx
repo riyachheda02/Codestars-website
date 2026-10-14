@@ -233,12 +233,6 @@ export default function ScatteredGallery() {
           </button>
         </div>
 
-        {/* Hint Banner in corner */}
-        <div className="canvas-hint-pill">
-          <span className="hint-pulse" />
-          <span className="hint-text">Drag anywhere to explore • Click photo to expand</span>
-        </div>
-
         {/* The Transformed World Plane */}
         <div
           className="scattered-world"

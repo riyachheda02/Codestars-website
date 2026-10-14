@@ -409,45 +409,6 @@
   text-align: center;
 }
 
-/* Hint Pill in Bottom Left */
-.canvas-hint-pill {
-  position: absolute;
-  bottom: 22px;
-  left: 22px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(18, 18, 23, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  padding: 8px 14px;
-  border-radius: 100px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 30;
-  pointer-events: none;
-}
-
-.hint-pulse {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent-orange, #ffa600);
-  box-shadow: 0 0 10px var(--accent-orange, #ffa600);
-  animation: pulseGlow 1.8s infinite;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.25); }
-}
-
-.hint-text {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: #a2a2b0;
-  font-weight: 500;
-}
-
 /* Lightbox Modal */
 .lightbox-backdrop {
   position: fixed;
@@ -636,20 +597,6 @@
     display: none;
   }
 
-  .canvas-hint-pill {
-    bottom: 14px;
-    left: 14px;
-    padding: 6px 12px;
-    max-width: calc(100% - 150px);
-  }
-
-  .hint-text {
-    font-size: 9.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   /* Lightbox on Tablet & Mobile */
   .lightbox-backdrop {
     padding: 14px;
@@ -752,11 +699,6 @@
     font-size: 9px;
     padding: 4px 10px;
     gap: 6px;
-  }
-
-  /* Hide bottom hint on compact phones to prevent any UI overlapping */
-  .canvas-hint-pill {
-    display: none;
   }
 
   .canvas-controls-dock {
