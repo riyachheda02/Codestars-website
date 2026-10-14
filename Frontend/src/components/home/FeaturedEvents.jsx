@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { featuredEventsData } from '../../data/home';
+import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { featuredEventsData, isEventUpcoming } from '../../data/home';
 
 const DEFAULT_AUTOPLAY_INTERVAL = 4000;
 const DEFAULT_ARROW_PAUSE = 10000;
@@ -10,33 +10,45 @@ const MANUAL_TRANSITION_MS = 650;
 // Perspective and 3D depth parameters
 const STAGE_PERSPECTIVE = 1200;
 
-// Apparent design targets for card layout (what the user should visually see)
-const APPARENT_TARGETS = {
-  0: { apparentScale: 1.0, apparentTxPercent: 0, tz: 0, rotY: 0, opacity: 1, dimmer: 0, parallax: 0 },
-  1: { apparentScale: 0.82, apparentTxPercent: 58, tz: -140, rotY: 28, opacity: 1, dimmer: 0.45, parallax: 6 },
-  2: { apparentScale: 0.66, apparentTxPercent: 92, tz: -280, rotY: 38, opacity: 1, dimmer: 0.70, parallax: 10 },
-  3: { apparentScale: 0.50, apparentTxPercent: 120, tz: -420, rotY: 42, opacity: 0, dimmer: 0.90, parallax: 14 },
+// Exact card layout targets based on user requirement:
+// Center: scale 1.0, 0px, opacity 1
+// First neighbors (offset 1): scale 0.84, translateX +-400px (gap >= 28px), rotateY 14deg, opacity 0.85
+// Second neighbors (offset 2): scale 0.70, translateX +-720px, rotateY 18deg, opacity 0.50
+// Third neighbors / beyond: opacity 0, pointer-events none
+const CARD_METRICS = {
+  0: { scale: 1.0, tx: 0, tz: 0, rotY: 0, opacity: 1.0, dimmer: 0, parallax: 0 },
+  1: { scale: 0.84, tx: 400, tz: -80, rotY: 14, opacity: 0.85, dimmer: 0.35, parallax: 6 },
+  2: { scale: 0.70, tx: 720, tz: -180, rotY: 18, opacity: 0.50, dimmer: 0.65, parallax: 10 },
+  3: { scale: 0.50, tx: 1000, tz: -300, rotY: 22, opacity: 0.0, dimmer: 0.90, parallax: 14 },
 };
 
-/**
- * Derives CSS scale and translateX percentage compensated for 3D perspective foreshortening.
- * Under perspective P and depth |z|:
- * foreshortening factor k = P / (P + |z|)
- * cssScale = apparentScale / k
- * cssTxPercent = apparentTxPercent / k
- */
-function getCompensatedCardMetrics(absOffset, sign) {
-  const target = APPARENT_TARGETS[absOffset] || APPARENT_TARGETS[3];
-  const k = STAGE_PERSPECTIVE / (STAGE_PERSPECTIVE + Math.abs(target.tz));
+function getCardMetrics(absOffset, sign, viewportWidth) {
+  const target = CARD_METRICS[absOffset] || CARD_METRICS[3];
+  let tx = target.tx * sign;
+  let scale = target.scale;
+  let rotY = target.rotY * -sign;
+  let tz = target.tz;
 
-  const cssScale = target.apparentScale / k;
-  const cssTxPercent = (target.apparentTxPercent / k) * sign;
-  const rotY = target.rotY * -sign;
+  // Responsive adjustments for tablet (<1100px) and mobile (<640px)
+  if (viewportWidth && viewportWidth < 640) {
+    // Mobile (<640px): center 72vw wide, neighbors peeking 14px with gap >= 12px
+    const cardW = Math.min(280, viewportWidth * 0.72);
+    const peek = 14;
+    const gap = 14;
+    const neighborTx = cardW + gap - peek;
+    tx = (absOffset === 1 ? neighborTx : neighborTx * 1.8) * sign;
+    scale = absOffset === 0 ? 1 : 0.85;
+    rotY = absOffset === 0 ? 0 : 8 * -sign;
+  } else if (viewportWidth && viewportWidth < 1100) {
+    // Tablet (<1100px): center 300x400, neighbors +-340px
+    tx = (absOffset === 1 ? 340 : 600) * sign;
+    scale = absOffset === 0 ? 1 : (absOffset === 1 ? 0.82 : 0.66);
+  }
 
   return {
-    cssScale,
-    cssTxPercent,
-    tz: target.tz,
+    scale,
+    tx,
+    tz,
     rotY,
     opacity: target.opacity,
     dimmer: target.dimmer,
@@ -382,14 +394,14 @@ export default function FeaturedEvents({ onNavigate }) {
 
   const handleCenterCardClick = (event) => {
     if (isDragging || Math.abs(dragOffset) > 5) return;
-    if (event.isExternal && event.actionUrl) {
+    if (event.isExternal && event.actionUrl && !event.actionUrl.startsWith('#')) {
       window.open(event.actionUrl, '_blank', 'noopener,noreferrer');
       return;
     }
+    const targetHash = event.slug ? `#events/${event.slug}` : (event.actionUrl || '#events');
+    window.location.hash = targetHash;
     if (onNavigate) {
-      onNavigate('events');
-    } else {
-      window.location.hash = '#events';
+      onNavigate(targetHash);
     }
   };
 
@@ -445,20 +457,21 @@ export default function FeaturedEvents({ onNavigate }) {
               const isRendered = absOffset <= 3 && !isAtRestOpposite;
               const isCenter = offset === 0;
 
-              // Derive perspective-compensated metrics from helper function
-              const metrics = getCompensatedCardMetrics(Math.min(3, absOffset), sign);
+              // Derive metrics from helper function
+              const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
+              const metrics = getCardMetrics(Math.min(3, absOffset), sign, viewportWidth);
 
-              let txPercent = metrics.cssTxPercent;
+              let tx = metrics.tx;
               let rotY = metrics.rotY;
               let tz = metrics.tz;
-              let scale = metrics.cssScale;
+              let scale = metrics.scale;
               let opacity = absOffset >= 3 ? 0 : metrics.opacity;
               let overlayOpacity = metrics.dimmer;
               let imgParallax = metrics.parallax;
 
               // During entrance before hasEntered: cards stack at center
               if (!hasEntered && !reducedMotion) {
-                txPercent = 0;
+                tx = 0;
                 rotY = 0;
                 tz = 0;
                 scale = 1;
@@ -478,7 +491,7 @@ export default function FeaturedEvents({ onNavigate }) {
 
               // Continuously sorted 3D transform with translate3d & translateZ
               // Center origin with calc(-50% + tx) and -50%
-              const cardTransform = `translate3d(calc(-50% + ${txPercent}% + ${dragTranslate}), -50%, ${tz}px) rotateY(${rotY}deg) ${tiltTransform} scale(${scale})`;
+              const cardTransform = `translate3d(calc(-50% + ${tx}px + ${dragTranslate}), -50%, ${tz}px) rotateY(${rotY}deg) ${tiltTransform} scale(${scale})`;
 
               const cardStyle = {
                 transform: cardTransform,
@@ -520,17 +533,48 @@ export default function FeaturedEvents({ onNavigate }) {
                   }}
                 >
                   <div className="coverflow-card-inner">
+                    {/* Blurred darkened backdrop for landscape / contained images */}
+                    <div
+                      className="coverflow-card-backdrop"
+                      style={{ backgroundImage: `url(${event.image})` }}
+                      aria-hidden="true"
+                    />
+
+                    {/* Main poster image */}
                     <img
                       src={event.image}
                       alt={event.description || event.title}
                       className="coverflow-card-img"
                       style={{
-                        transform: imgParallax ? `scale(1.08) translate3d(${imgParallax}%, 0, 0)` : 'scale(1.02) translate3d(0, 0, 0)',
+                        transform: imgParallax ? `scale(1.04) translate3d(${imgParallax}%, 0, 0)` : 'scale(1.0) translate3d(0, 0, 0)',
                       }}
                       loading="eager"
                       decoding="async"
                       draggable={false}
                     />
+
+                    {/* Upcoming badge, top-left */}
+                    {isEventUpcoming(event.date) && (
+                      <div className="coverflow-card-badge-wrap">
+                        <span className="coverflow-upcoming-badge">Upcoming</span>
+                      </div>
+                    )}
+
+                    {/* Bottom Dark Gradient Scrim Overlay */}
+                    <div className="coverflow-card-overlay">
+                      <div className="coverflow-card-meta">
+                        <span className="coverflow-card-category">{event.category || 'EVENT'}</span>
+                        <h3 className="coverflow-card-title">{event.title}</h3>
+                        <div className="coverflow-card-footer-row">
+                          <span className="coverflow-card-date">{event.displayDate || event.date}</span>
+                          <span className="coverflow-card-explore">
+                            <span>Explore</span>
+                            <ArrowUpRight size={14} className="coverflow-explore-icon" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Dark Dimming Overlay for non-center cards (opacity-only) */}
                     <div
                       className="coverflow-card-dimmer"

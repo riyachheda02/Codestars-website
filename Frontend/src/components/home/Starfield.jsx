@@ -13,82 +13,91 @@ export default function Starfield() {
     let animId;
     let isVisible = true;
 
-    // 3 depth layers of stars:
-    // Layer 0: distant (small, faint, shifts 6px)
-    // Layer 1: mid (medium, shifts 12px)
-    // Layer 2: near (larger, brighter, shifts 18px)
+    // Check prefers-reduced-motion
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 3 depth groups of stars:
+    // Group 0: faint, static opacity
+    // Group 1: slow twinkle (sin wave)
+    // Group 2: subtle brightness pulse
     const stars = [];
-    const STAR_COUNT = 66;
+    const STAR_COUNT = 75; // Low density so it stays subtle and does not reduce text contrast
 
     const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
 
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', resize, { passive: true });
 
     for (let i = 0; i < STAR_COUNT; i++) {
-      const layer = i % 3; // 0, 1, 2
-      const shiftMax = layer === 0 ? 6 : layer === 1 ? 12 : 18;
-      const radiusBase = layer === 0 ? 0.7 : layer === 1 ? 1.1 : 1.5;
-      const alphaBase = layer === 0 ? 0.25 : layer === 1 ? 0.38 : 0.55;
+      const group = i % 3; // 0, 1, 2
+      const radiusBase = group === 0 ? 0.75 : group === 1 ? 1.05 : 1.35;
+      const alphaBase = group === 0 ? 0.22 : group === 1 ? 0.32 : 0.45;
 
       stars.push({
         x: Math.random(),
         y: Math.random(),
-        layer,
-        shiftMax,
-        radius: Math.random() * 0.6 + radiusBase,
-        alpha: Math.random() * 0.2 + alphaBase,
-        speed: Math.random() * 0.02 + 0.008,
+        group,
+        radius: Math.random() * 0.4 + radiusBase,
+        alpha: Math.random() * 0.15 + alphaBase,
+        speed: Math.random() * 0.012 + 0.005,
         phase: Math.random() * Math.PI * 2,
       });
     }
 
-    // Observer to pause when off-screen
-    const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting;
-    });
-    observer.observe(canvas);
+    // Scroll parallax translateY calculation: at most 12% of scroll distance, applied via rAF
+    let scrollY = window.scrollY || 0;
+    let targetScrollY = scrollY;
+    let rafScrollId = null;
 
-    // Read current --hero-ptr-x and --hero-ptr-y from parent #hero element
-    let currentShiftX = 0;
-    let currentShiftY = 0;
+    const onScroll = () => {
+      targetScrollY = window.scrollY || 0;
+      if (!rafScrollId) {
+        rafScrollId = requestAnimationFrame(() => {
+          scrollY = targetScrollY;
+          if (canvas) {
+            if (reducedMotion) {
+              canvas.style.transform = 'none';
+            } else {
+              // translateY of at most 12% of scroll distance, modulo viewport height to wrap seamlessly
+              const maxShift = canvas.height || 900;
+              const yOffset = -((scrollY * 0.09) % maxShift);
+              canvas.style.transform = `translate3d(0, ${yOffset.toFixed(2)}px, 0)`;
+            }
+          }
+          rafScrollId = null;
+        });
+      }
+    };
 
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // Initial call
+    onScroll();
+
+    // Render loop for subtle twinkling on two or three dot groups
     const render = () => {
       animId = requestAnimationFrame(render);
       if (!isVisible) return;
-
-      const heroEl = document.getElementById('hero');
-      let targetPx = 0;
-      let targetPy = 0;
-
-      if (heroEl) {
-        const valX = parseFloat(heroEl.style.getPropertyValue('--hero-ptr-x') || '0');
-        const valY = parseFloat(heroEl.style.getPropertyValue('--hero-ptr-y') || '0');
-        if (!isNaN(valX)) targetPx = valX;
-        if (!isNaN(valY)) targetPy = valY;
-      }
-
-      // Smooth lerp to rest or target opposite to pointer
-      currentShiftX += (targetPx - currentShiftX) * 0.08;
-      currentShiftY += (targetPy - currentShiftY) * 0.08;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       for (let i = 0; i < STAR_COUNT; i++) {
         const star = stars[i];
-        star.phase += star.speed;
-        const currentAlpha = star.alpha + Math.sin(star.phase) * 0.22;
-        const clampedAlpha = Math.max(0.04, Math.min(0.75, currentAlpha));
+        let currentAlpha = star.alpha;
 
-        // Shift opposite to cursor (-currentShiftX * shiftMax)
-        const offsetX = -currentShiftX * star.shiftMax;
-        const offsetY = -currentShiftY * star.shiftMax;
+        if (!reducedMotion) {
+          if (star.group === 1 || star.group === 2) {
+            star.phase += star.speed;
+            currentAlpha = star.alpha + Math.sin(star.phase) * 0.14;
+          }
+        }
 
-        const px = star.x * canvas.width + offsetX;
-        const py = star.y * canvas.height + offsetY;
+        const clampedAlpha = Math.max(0.04, Math.min(0.65, currentAlpha));
+
+        const px = star.x * canvas.width;
+        const py = star.y * canvas.height;
 
         ctx.fillStyle = `rgba(245, 185, 58, ${clampedAlpha})`;
         ctx.beginPath();
@@ -97,15 +106,16 @@ export default function Starfield() {
       }
     };
 
-    animId = requestAnimationFrame(render);
+    render();
 
     return () => {
       cancelAnimationFrame(animId);
+      if (rafScrollId) cancelAnimationFrame(rafScrollId);
       window.removeEventListener('resize', resize);
-      observer.disconnect();
+      window.removeEventListener('scroll', onScroll);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="hero-starfield-canvas" aria-hidden="true" />;
+  return <canvas ref={canvasRef} className="global-starfield-canvas" aria-hidden="true" />;
 }
 

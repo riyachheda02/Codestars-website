@@ -1,0 +1,12 @@
+{
+  "forwardFramesCount": 7,
+  "forwardOverlapViolations": 0,
+  "forwardBoxViolations": 0,
+  "reverseFramesCount": 9,
+  "reverseOverlapViolations": 0,
+  "reverseBoxViolations": 0,
+  "cycleSuccess": true,
+  "interruptSuccess": true,
+  "consoleErrorsCount": 0,
+  "consoleErrors": []
+}

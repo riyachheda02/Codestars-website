@@ -10,10 +10,10 @@ const iconMap = {
 
 const pillarIndices = ['01', '02', '03'];
 
-export default function WhatWeAre() {
+export default function WhatWeAre({ contentStyle, contentClass = '' }) {
   return (
     <section id="what-we-are" className="home-section what-we-are-section" aria-label="What we are">
-      <div className="section-container">
+      <div className={`section-container what-we-are-content-wrap ${contentClass}`} style={contentStyle}>
         <div className="section-head-display">
           <h2 className="section-display-title">WHAT WE ARE</h2>
           <div className="section-title-underline" aria-hidden="true" />

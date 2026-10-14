@@ -80,15 +80,29 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
       // Home page: no auto-hide, only merge logic
       setIsNavHiddenOnScroll(false);
 
+      const updateWithP = (rawP) => {
+        const eased = rawP < 0.5 ? 4 * rawP * rawP * rawP : 1 - Math.pow(-2 * rawP + 2, 3) / 2;
+        setRawPVal(rawP);
+        setMergeProgress(eased);
+        setScrolled(rawP > 0.1 || window.scrollY > 20);
+        broadcastSlotRect();
+      };
+
+      const handleHeroProgress = (e) => {
+        if (typeof e.detail?.progress === 'number') {
+          updateWithP(e.detail.progress);
+        }
+      };
+
       let frame;
       const onScroll = () => {
         const scrollY = window.scrollY;
-        const vh = window.innerHeight;
-        const rawP = Math.max(0, Math.min(1, scrollY / (0.8 * vh)));
-        const eased = rawP < 0.5 ? 4 * rawP * rawP * rawP : 1 - Math.pow(-2 * rawP + 2, 3) / 2;
-
-        setRawPVal(rawP);
-        setMergeProgress(eased);
+        // Direct scroll fallback if scrolled past hero without trigger
+        if (scrollY > 120 && rawPVal < 1) {
+          updateWithP(1);
+        } else if (scrollY === 0 && rawPVal > 0) {
+          updateWithP(0);
+        }
         setScrolled(scrollY > 20);
         broadcastSlotRect();
       };
@@ -98,10 +112,11 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
         frame = requestAnimationFrame(onScroll);
       };
 
-      onScroll();
+      window.addEventListener('codestars-hero-progress', handleHeroProgress);
       window.addEventListener('scroll', requestUpdate, { passive: true });
       return () => {
         cancelAnimationFrame(frame);
+        window.removeEventListener('codestars-hero-progress', handleHeroProgress);
         window.removeEventListener('scroll', requestUpdate);
       };
     }
