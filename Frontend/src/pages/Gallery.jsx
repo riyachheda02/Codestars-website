@@ -23,13 +23,14 @@ export default function Gallery({ onNavigate }) {
             MOMENTS & MEMORIES
           </span>
           <h1 style={{
-            fontSize: 'clamp(28px, 4vw, 44px)',
+            fontSize: 'clamp(36px, 5.2vw, 64px)',
             fontWeight: 700,
             color: 'var(--text)',
             letterSpacing: '-0.02em'
           }}>
             Interactive Photo Gallery
           </h1>
+          <div className="page-title-underline" aria-hidden="true" />
           <p style={{
             color: 'var(--muted)',
             fontSize: '15px',

@@ -337,6 +337,7 @@ export default function Resources({ onNavigate }) {
           <h1 className="res-hero-title" aria-label="Learning Resources">
             Learning Resources
           </h1>
+          <div className="page-title-underline" aria-hidden="true" />
           <p className="res-hero-sub">
             Discover free, high-quality resources to accelerate your learning journey
           </p>

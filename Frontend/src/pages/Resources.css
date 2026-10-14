@@ -141,18 +141,16 @@
 }
 
 .res-hero-title {
-  font-family: var(--font-display), var(--font-serif), serif;
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-family: var(--font-heading);
+  font-size: clamp(36px, 5.2vw, 64px);
   font-weight: 900;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #C98A12 0%, var(--gold) 50%, #FFD36B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
   margin: 0 0 12px;
   display: inline-block;
   text-align: center;
-  filter: drop-shadow(0 0 30px rgba(245, 185, 58, 0.35));
+  text-shadow: 0 0 24px var(--glow), 0 0 45px rgba(245, 185, 58, 0.22);
 }
 
 .res-hero-sub {
@@ -629,7 +627,7 @@
 
 @media (max-width: 480px) {
   .res-header { padding-top: 96px; }
-  .res-hero-title { font-size: clamp(2rem, 9vw, 2.75rem); }
+  .res-hero-title { font-size: clamp(36px, 5.2vw, 64px); }
   .res-hero-sub { font-size: 14.5px; margin-bottom: 32px; }
   .res-search-wrap { margin-bottom: 20px; }
   .res-search-input { font-size: 15px; padding-block: 12px; }

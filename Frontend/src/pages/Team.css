@@ -258,7 +258,7 @@
   gap: 16px;
   margin: 0 auto;
   font-family: var(--font-display), var(--font-main);
-  font-size: clamp(2.8rem, 7.5vw, 5.2rem);
+  font-size: clamp(36px, 5.2vw, 64px);
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -274,19 +274,19 @@
 
 /* Yellow Accent for "Team" matching footer (var(--gold)) and Events title glow */
 .title-team {
-  color: var(--gold);
+  color: #ffffff;
   letter-spacing: -0.03em;
-  text-shadow: 0 0 50px rgba(245, 185, 58, 0.45);
+  text-shadow: 0 0 24px var(--glow), 0 0 45px rgba(245, 185, 58, 0.22);
 }
 
 /* Center Accent Underline Bar */
 .team-title-bar {
-  width: 58px;
-  height: 3.5px;
-  background: var(--gold);
-  box-shadow: 0 0 14px rgba(245, 185, 58, 0.6);
-  border-radius: 2px;
-  margin: 6px auto 8px;
+  width: 64px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
+  box-shadow: 0 0 8px rgba(245, 185, 58, 0.6);
+  border-radius: 9999px;
+  margin: 0 auto;
 }
 
 .team-poster-subtitle {
@@ -676,7 +676,7 @@
 @media (max-width: 480px) {
   .team-poster-hero { padding: 48px 16px 32px; }
   .team-eyebrow-pill { font-size: 9px; letter-spacing: 0.14em; padding: 5px 10px; }
-  .team-poster-title { font-size: clamp(2.35rem, 13vw, 3.4rem); gap: 8px; }
+  .team-poster-title { font-size: clamp(36px, 5.2vw, 64px); gap: 8px; }
   .team-poster-subtitle { font-size: 14px; }
   .team-year-tab { padding: 7px 14px; }
   .team-poster-main { padding-bottom: 64px; }

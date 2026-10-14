@@ -16,28 +16,10 @@
 /* Topbar with Eyebrow and Filter Tabs */
 .scattered-topbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-end;
   flex-wrap: wrap;
   gap: 20px;
-}
-
-.topbar-meta .section-eyebrow {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent-orange, var(--gold));
-  letter-spacing: 2px;
-  margin-bottom: 6px;
-}
-
-.topbar-meta .section-title {
-  font-family: var(--font-display, var(--font-main));
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: #ffffff;
 }
 
 .gallery-filter-tabs {
@@ -580,10 +562,6 @@
     --canvas-height: 620px;
   }
 
-  .topbar-meta .section-title {
-    font-size: 28px;
-  }
-
   .hub-title {
     font-size: 46px;
   }
@@ -601,10 +579,6 @@
     --card-width-scale: 0.82;
     --canvas-height: 560px;
     gap: 18px;
-  }
-
-  .topbar-meta .section-title {
-    font-size: 24px;
   }
 
   .hub-title {
@@ -698,10 +672,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 14px;
-  }
-
-  .topbar-meta .section-title {
-    font-size: 22px;
   }
 
   .gallery-filter-tabs {
