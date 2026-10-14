@@ -8,6 +8,8 @@ const iconMap = {
   Users: Users,
 };
 
+const pillarIndices = ['01', '02', '03'];
+
 export default function WhatWeAre() {
   return (
     <section id="what-we-are" className="home-section what-we-are-section" aria-label="What we are">
@@ -31,10 +33,14 @@ export default function WhatWeAre() {
               >
                 <div className="pillar-glass-glow" aria-hidden="true" />
                 <div className="pillar-card-content">
-                  <div className="pillar-icon-wrap">
-                    <IconComponent size={22} className="pillar-icon" />
+                  <div className="pillar-card-top-row">
+                    <div className="pillar-icon-wrap">
+                      <IconComponent size={28} className="pillar-icon" />
+                    </div>
+                    <span className="pillar-mono-idx">{pillarIndices[idx] || `0${idx + 1}`}</span>
                   </div>
                   <h3 className="pillar-card-title">{pillar.title}</h3>
+                  <div className="pillar-title-underline" aria-hidden="true" />
                   <p className="pillar-card-desc">{pillar.description}</p>
                 </div>
               </div>
@@ -45,3 +51,4 @@ export default function WhatWeAre() {
     </section>
   );
 }
+

@@ -285,7 +285,7 @@ export default function ScatteredGallery() {
               <svg width="22" height="28" viewBox="0 0 28 34" fill="none">
                 <ellipse cx="14" cy="30" rx="8" ry="2.5" fill="rgba(0,0,0,0.3)" />
                 <path d="M14 18L14 29" stroke="#aaa" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="14" cy="12" r="9" fill="#ffa600" />
+                <circle cx="14" cy="12" r="9" fill="#F5B93A" />
                 <circle cx="11" cy="9" r="2" fill="#fff" />
               </svg>
             </div>

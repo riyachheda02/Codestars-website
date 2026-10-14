@@ -81,8 +81,7 @@ function App() {
         navigateTo('team');
       } else if (
         href === '#events' ||
-        href === '#/events' ||
-        href.includes('/events')
+        href === '#/events'
       ) {
         e.preventDefault();
         navigateTo('events');

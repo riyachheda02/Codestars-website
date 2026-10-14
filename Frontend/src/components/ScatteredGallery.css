@@ -27,7 +27,7 @@
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  color: var(--accent-orange, #ffa600);
+  color: var(--accent-orange, var(--gold));
   letter-spacing: 2px;
   margin-bottom: 6px;
 }
@@ -68,10 +68,10 @@
 }
 
 .gallery-filter-pill.active {
-  background: var(--accent-orange, #ffa600);
-  color: #080808;
+  background: var(--accent-orange, var(--gold));
+  color: #070A12;
   font-weight: 800;
-  box-shadow: 0 4px 14px rgba(255, 166, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(245, 185, 58, 0.3);
 }
 
 /* Main Canvas Viewport */
@@ -209,7 +209,7 @@
 }
 
 .drag-arrows-icon {
-  color: var(--accent-orange, #ffa600);
+  color: var(--accent-orange, var(--gold));
   animation: pulseArrows 2s ease-in-out infinite;
 }
 
@@ -248,8 +248,8 @@
 /* NO MOVEMENT ON HOVER: cards stay strictly still in place */
 .scattered-card.card-active:hover {
   z-index: 60 !important;
-  border-color: rgba(255, 166, 0, 0.75);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 22px rgba(255, 166, 0, 0.25);
+  border-color: rgba(245, 185, 58, 0.75);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 22px rgba(245, 185, 58, 0.25);
 }
 
 /* Photo box - NO OVERLAY, clean view */
@@ -303,9 +303,9 @@
   font-weight: 800;
   padding: 1.5px 5px;
   border-radius: 4px;
-  background: rgba(255, 166, 0, 0.16);
-  color: var(--accent-orange, #ffa600);
-  border: 1px solid rgba(255, 166, 0, 0.35);
+  background: rgba(245, 185, 58, 0.16);
+  color: var(--accent-orange, var(--gold));
+  border: 1px solid rgba(245, 185, 58, 0.35);
   flex-shrink: 0;
 }
 
@@ -324,7 +324,7 @@
 .caption-view-hint {
   font-family: var(--font-mono);
   font-size: 9.5px;
-  color: var(--accent-orange, #ffa600);
+  color: var(--accent-orange, var(--gold));
   opacity: 0;
   transform: translateX(-4px);
   transition: all 0.2s ease;
@@ -377,7 +377,7 @@
 
 .recenter-btn .dock-icon {
   font-size: 15px;
-  color: var(--accent-orange, #ffa600);
+  color: var(--accent-orange, var(--gold));
 }
 
 .recenter-btn .dock-label {
@@ -431,8 +431,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent-orange, #ffa600);
-  box-shadow: 0 0 10px var(--accent-orange, #ffa600);
+  background: var(--accent-orange, var(--gold));
+  box-shadow: 0 0 10px var(--accent-orange, var(--gold));
   animation: pulseGlow 1.8s infinite;
 }
 
@@ -475,7 +475,7 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(255, 166, 0, 0.15);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(245, 185, 58, 0.15);
   animation: zoomPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -519,9 +519,9 @@
 }
 
 .lightbox-close:hover {
-  background: var(--accent-orange, #ffa600);
-  color: #080808;
-  border-color: var(--accent-orange, #ffa600);
+  background: var(--accent-orange, var(--gold));
+  color: #070A12;
+  border-color: var(--accent-orange, var(--gold));
 }
 
 .lightbox-info {
@@ -550,10 +550,10 @@
 .lightbox-year {
   font-family: var(--font-mono);
   font-size: 13px;
-  color: var(--accent-orange, #ffa600);
+  color: var(--accent-orange, var(--gold));
   font-weight: 700;
-  background: rgba(255, 166, 0, 0.12);
-  border: 1px solid rgba(255, 166, 0, 0.3);
+  background: rgba(245, 185, 58, 0.12);
+  border: 1px solid rgba(245, 185, 58, 0.3);
   padding: 6px 12px;
   border-radius: 8px;
   white-space: nowrap;

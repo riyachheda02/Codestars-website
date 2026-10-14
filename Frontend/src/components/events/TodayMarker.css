@@ -1,0 +1,68 @@
+/* Today Marker: small centered glass pill reading "TODAY" with a tiny pulsing dot,
+   placed chronologically on the spine. Solid navy background / glass so spine doesn't show through. */
+.timeline-today-item {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 36px 0 28px;
+  z-index: 10;
+}
+
+.today-marker-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0B0F1A;
+  border: 1px solid rgba(245, 185, 58, 0.6);
+  border-radius: 9999px;
+  padding: 4px 14px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.7),
+    0 0 14px rgba(245, 185, 58, 0.25);
+}
+
+.today-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px var(--gold-bright);
+  animation: todayDotPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes todayDotPulse {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    box-shadow: 0 0 12px var(--gold-bright);
+  }
+}
+
+.today-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--gold-bright);
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .timeline-today-item {
+    justify-content: flex-start;
+    padding-left: 2px;
+    margin: 28px 0 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-dot {
+    animation: none !important;
+  }
+}

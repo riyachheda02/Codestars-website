@@ -1,5 +1,5 @@
 import bloodBytesImg from '../assets/events photo/bloody_bites.webp';
-import codeUncodeImg from '../assets/events photo/code_uncode_poolprize.jpg';
+import codeUncodeImg from '../assets/events photo/code_uncode_poolprize.webp';
 import bountyImg from '../assets/events photo/bounty.webp';
 import mockContestImg from '../assets/events photo/MOCK_CONTEST .webp';
 import feContestImg from '../assets/events photo/FE_CONTEST.webp';
@@ -132,53 +132,6 @@ export const featuredEventsData = [
   },
 ];
 
-/* 4. Achievements Data - (Tall tinted-glass cards with large display-serif year like reference awards) */
-export const achievementsData = {
-  eyebrow: 'AWARDS & ACHIEVEMENTS',
-  heading: 'Milestones that define our relentless pursuit of coding mastery.',
-  items: [
-    {
-      id: 'ach-1',
-      year: '2024',
-      title: 'ICPC Regional Finalists',
-      // [PLACEHOLDER CONTENT]
-      description: 'Multiple student teams qualifying and representing DJSCE at Amritapuri and Kanpur regionals.',
-      isPlaceholder: true,
-    },
-    {
-      id: 'ach-2',
-      year: '2025',
-      title: 'Top 50 Global Coding Ranks',
-      // [PLACEHOLDER CONTENT]
-      description: 'Students consistently attaining Candidate Master rank on Codeforces & 6-Star on CodeChef.',
-      isPlaceholder: true,
-    },
-    {
-      id: 'ach-3',
-      year: '2025',
-      title: '4,000+ Active Participants',
-      // [PLACEHOLDER CONTENT]
-      description: 'Organized national coding championships with participants from over 370 engineering institutes.',
-      isPlaceholder: true,
-    },
-    {
-      id: 'ach-4',
-      year: '2026',
-      title: 'Best Student Technical Chapter',
-      // [PLACEHOLDER CONTENT]
-      description: 'Awarded premier student competitive coding community for fostering rigorous algorithmic problem-solving.',
-      isPlaceholder: true,
-    },
-    {
-      id: 'ach-5',
-      year: '2026',
-      title: '₹2,50,000+ Prize Pool Championship',
-      // [PLACEHOLDER CONTENT]
-      description: 'Directly supported student winners with cash prizes, sponsorships, and high-tier competitive tracks.',
-      isPlaceholder: true,
-    },
-  ],
-};
 
 /* 5. Announcements Data */
 export const announcementsData = [

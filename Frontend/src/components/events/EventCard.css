@@ -1,0 +1,418 @@
+/* =========================================================================
+   EventCard.css - Landscape rectangle event cards
+   ========================================================================= */
+
+/* Base Landscape Card */
+.compact-event-card {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: 200px;
+  max-height: 230px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  display: grid;
+  grid-template-columns: 38% 62%;
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  box-sizing: border-box;
+}
+
+/* Hover: lift 4px, brighter border, soft radial spotlight */
+.compact-event-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(245, 185, 58, 0.55);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.65),
+    0 0 20px rgba(245, 185, 58, 0.16);
+}
+
+/* Soft gold radial spotlight following cursor inside the card */
+.compact-card-spotlight {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle 240px at var(--mx, -1000px) var(--my, -1000px),
+    rgba(255, 211, 107, 0.12) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Flagship cards: gold hairline border only (same size as other cards) */
+.compact-event-card.is-flagship {
+  border-color: rgba(245, 185, 58, 0.45);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.55),
+    0 0 16px rgba(245, 185, 58, 0.12);
+}
+
+.compact-flagship-hairline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold-bright) 30%,
+    var(--gold) 70%,
+    transparent 100%
+  );
+  box-shadow: 0 0 8px rgba(245, 185, 58, 0.6);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Left Poster: 38% width (handled by grid column), full card height, rounded left corners */
+.compact-poster-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #070A12;
+  border-top-left-radius: 17px;
+  border-bottom-left-radius: 17px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.compact-poster-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: transform 400ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.compact-event-card:hover .compact-poster-img {
+  transform: scale(1.04);
+}
+
+.compact-poster-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 65%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+}
+
+/* Right Content Block: padding 16px 22px at desktop to fit vertically centered comfortably */
+.compact-content-area {
+  position: relative;
+  z-index: 2;
+  padding: 16px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0; /* Prevents flex children from overflowing */
+}
+
+/* Badges row: mono category label + optional status pill */
+.compact-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 3px;
+}
+
+.compact-category-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.compact-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  line-height: 1.2;
+}
+
+.compact-status-pill.status-upcoming {
+  color: #38ef7d;
+  background: rgba(56, 239, 125, 0.1);
+  border: 1px solid rgba(56, 239, 125, 0.3);
+}
+
+.compact-status-pill.status-live {
+  color: #ff4757;
+  background: rgba(255, 71, 87, 0.12);
+  border: 1px solid rgba(255, 71, 87, 0.35);
+}
+
+.compact-live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ff4757;
+  box-shadow: 0 0 6px #ff4757;
+  animation: compactLivePulse 1.4s infinite ease-in-out;
+}
+
+@keyframes compactLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.4); }
+}
+
+/* Title in Playfair 22px, max 2 lines */
+.compact-title-serif {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.18;
+  color: var(--text);
+  margin: 0 0 3px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Mono 12px meta line "date - venue" on a single line with ellipsis */
+.compact-meta-line {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+/* Description in Inter 14px, clamped to 2 lines */
+.compact-description {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.38;
+  color: rgba(242, 244, 248, 0.78);
+  margin: 0 0 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Single gold "Explore event" button (small, 36px high) at the bottom */
+.compact-action-row {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+}
+
+.compact-explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  height: 36px;
+  background: var(--gold);
+  color: #070A12;
+  border: 1px solid var(--gold);
+  border-radius: 9999px;
+  padding: 0 16px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+  box-shadow: 0 0 12px rgba(245, 185, 58, 0.28);
+  box-sizing: border-box;
+}
+
+.compact-explore-btn:hover {
+  background: var(--gold-bright);
+  box-shadow: 0 0 18px rgba(245, 185, 58, 0.5);
+}
+
+.compact-arrow-icon {
+  transition: transform 0.2s ease;
+}
+
+.compact-explore-btn:hover .compact-arrow-icon {
+  transform: translateX(4px);
+}
+
+.compact-explore-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* =========================================================================
+   Tablet (640px to 899px)
+   - Spine at the left edge as before; cards are full width of remaining column.
+   - Same horizontal layout (poster left 34%, height about 180px).
+   ========================================================================= */
+@media (min-width: 640px) and (max-width: 899px) {
+  .compact-event-card {
+    height: 180px;
+    max-height: 180px;
+    grid-template-columns: 34% 66%;
+  }
+
+  .compact-content-area {
+    padding: 14px 18px;
+  }
+
+  .compact-title-serif {
+    font-size: 20px;
+    margin-bottom: 3px;
+  }
+
+  .compact-meta-line {
+    margin-bottom: 4px;
+  }
+
+  .compact-description {
+    font-size: 13.5px;
+    line-height: 1.35;
+    margin-bottom: 8px;
+  }
+
+  .compact-explore-btn {
+    height: 34px;
+    font-size: 12.5px;
+    padding: 0 14px;
+  }
+}
+
+/* =========================================================================
+   Mobile below 640px
+   - Keep horizontal layout but compact: poster 96px wide, card height auto with min 132px.
+   - Title 18px max 2 lines, description clamped to 2 lines, Explore button 32px high.
+   ========================================================================= */
+@media (max-width: 639px) {
+  .compact-event-card {
+    height: auto;
+    min-height: 132px;
+    max-height: none;
+    grid-template-columns: 96px 1fr;
+  }
+
+  .compact-poster-wrapper {
+    width: 96px;
+    height: 100%;
+    border-top-left-radius: 17px;
+    border-bottom-left-radius: 17px;
+  }
+
+  .compact-content-area {
+    padding: 12px 14px;
+  }
+
+  .compact-badges-row {
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+
+  .compact-category-label {
+    font-size: 10px;
+  }
+
+  .compact-status-pill {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+
+  .compact-title-serif {
+    font-size: 18px;
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+
+  .compact-meta-line {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .compact-description {
+    font-size: 12.5px;
+    line-height: 1.35;
+    margin-bottom: 6px;
+  }
+
+  .compact-explore-btn {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 12px;
+  }
+}
+
+/* =========================================================================
+   Extra-narrow mobile (<= 375px)
+   - If text cannot fit without clipping at 360px width, stack instead:
+     poster on top at aspect-ratio 16/9, content below.
+   ========================================================================= */
+@media (max-width: 375px) {
+  .compact-event-card {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+  }
+
+  .compact-poster-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    border-top-left-radius: 17px;
+    border-top-right-radius: 17px;
+    border-bottom-left-radius: 0;
+  }
+
+  .compact-poster-gradient {
+    background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.4) 100%);
+  }
+
+  .compact-content-area {
+    padding: 12px 14px;
+  }
+}
+
+/* Touch devices: disable hover spotlight */
+@media (hover: none) {
+  .compact-card-spotlight {
+    display: none;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .compact-event-card,
+  .compact-poster-img,
+  .compact-arrow-icon {
+    transition: none !important;
+  }
+  .compact-event-card:hover {
+    transform: none !important;
+  }
+  .compact-event-card:hover .compact-poster-img {
+    transform: none !important;
+  }
+  .compact-event-card:hover .compact-arrow-icon {
+    transform: none !important;
+  }
+  .compact-card-spotlight {
+    display: none;
+  }
+  .compact-live-dot {
+    animation: none !important;
+  }
+}

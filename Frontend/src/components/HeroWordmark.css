@@ -6,7 +6,7 @@
   z-index: 990;
   pointer-events: none;
   will-change: transform, opacity;
-  transition: opacity 0.2s ease;
+  perspective: 1000px;
 }
 
 .hero-wordmark-fixed-layer.is-preview-mode {
@@ -18,63 +18,124 @@
   margin-bottom: 24px;
 }
 
-.hero-wordmark-particle-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: block;
-  transition: opacity 0.2s linear;
+/* Inner wrapper for first-load cinematic fade-in:
+   0.35-1.75s: opacity 0 -> 1, translateY 12px -> 0, blur 8px -> 0
+   Once finished, filter is set to none.
+   Tilt is applied via CSS variables --hero-ptr-x and --hero-ptr-y (max ~4deg) */
+.hero-wordmark-inner-anim {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform: translateY(12px) rotateX(calc(var(--hero-ptr-y, 0) * -4deg)) rotateY(calc(var(--hero-ptr-x, 0) * 4deg));
+  transform-style: preserve-3d;
+  filter: blur(8px);
+  will-change: opacity, transform, filter;
+  transition:
+    opacity 1.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    filter 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* Crisp solid text overlay (for scroll merge crossfade) */
+.hero-wordmark-inner-anim.is-revealed {
+  opacity: 1;
+  filter: blur(0px);
+}
+
+.hero-wordmark-inner-anim.is-anim-done {
+  filter: none !important;
+  will-change: transform;
+}
+
+.hero-wordmark-inner-anim.is-skipped {
+  transition:
+    opacity 0.2s cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 0.2s cubic-bezier(0.22, 0.61, 0.36, 1),
+    filter 0.2s cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+}
+
+/* Crisp solid text container */
 .hero-wordmark-solid-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   pointer-events: none;
-  transition: opacity 0.15s linear;
 }
 
+/* DJS Line with cursor-following gold spotlight gradient */
 .solid-djs-line {
   font-weight: 900;
   color: var(--gold);
+  background: radial-gradient(
+    circle at var(--hero-spotlight-x, 50%) var(--hero-spotlight-y, 50%),
+    #FFD36B 0%,
+    var(--gold) 65%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   line-height: 1;
-  text-shadow: 0 0 12px rgba(245, 185, 58, 0.45);
+  letter-spacing: 0.16em;
+  text-shadow: 0 0 16px rgba(245, 185, 58, 0.45);
+  margin-bottom: 6px;
+  transition: text-shadow 0.3s ease;
 }
 
+/* CodeStars line with cursor-following gold spotlight gradient */
 .solid-codestars-line {
   font-weight: 900;
   color: var(--gold);
-  line-height: 1;
-  margin-top: 14px;
-  text-shadow:
-    0 0 24px rgba(245, 185, 58, 0.55),
-    0 4px 16px rgba(0, 0, 0, 0.9);
-}
-
-/* Reduced motion static fallback */
-.hero-wordmark-static-fallback {
+  background: radial-gradient(
+    circle at var(--hero-spotlight-x, 50%) var(--hero-spotlight-y, 50%),
+    #FFD36B 0%,
+    var(--gold) 60%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  text-shadow:
+    0 0 24px rgba(245, 185, 58, 0.45),
+    0 0 50px rgba(245, 185, 58, 0.2);
+  transition: text-shadow 0.3s ease;
 }
 
-.fallback-prefix-djs {
-  font-size: clamp(14px, 1.8vw, 22px);
-  font-weight: 900;
-  letter-spacing: 0.24em;
-  color: var(--gold);
-  text-transform: uppercase;
-  margin-bottom: 2px;
+/* Intensify glow slightly while hovering hero section */
+.is-hero-hovered ~ .hero-wordmark-fixed-layer .solid-djs-line,
+body.is-hero-hovered .solid-djs-line {
+  text-shadow: 0 0 22px rgba(245, 185, 58, 0.7), 0 0 35px rgba(255, 211, 107, 0.4);
 }
 
-.fallback-wordmark-codestars {
-  font-size: clamp(46px, 9vw, 94px);
-  font-weight: 900;
-  color: var(--gold);
-  letter-spacing: -0.025em;
-  text-shadow: 0 0 24px rgba(245, 185, 58, 0.4);
+.is-hero-hovered ~ .hero-wordmark-fixed-layer .solid-codestars-line,
+body.is-hero-hovered .solid-codestars-line {
+  text-shadow:
+    0 0 30px rgba(245, 185, 58, 0.65),
+    0 0 65px rgba(245, 185, 58, 0.35);
 }
+
+/* Prefers Reduced Motion: simple 400ms opacity fade, no blur or drift */
+@media (prefers-reduced-motion: reduce) {
+  .hero-wordmark-fixed-layer {
+    perspective: none !important;
+  }
+  .hero-wordmark-inner-anim {
+    transform: none !important;
+    filter: none !important;
+    transition: opacity 0.4s ease !important;
+  }
+  .solid-djs-line,
+  .solid-codestars-line {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    -webkit-text-fill-color: var(--gold) !important;
+    color: var(--gold) !important;
+  }
+}
+

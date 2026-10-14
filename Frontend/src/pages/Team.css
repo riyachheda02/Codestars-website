@@ -8,7 +8,7 @@
 
 .team-page-root {
   min-height: 100vh;
-  background-color: #080808;
+  background-color: var(--bg);
   color: #ffffff;
   font-family: var(--font-main, 'Plus Jakarta Sans', sans-serif);
   position: relative;
@@ -52,7 +52,7 @@
   transform: translateX(-50%);
   width: 650px;
   height: 400px;
-  background: radial-gradient(circle, rgba(255, 166, 0, 0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(245, 185, 58, 0.18) 0%, transparent 70%);
   opacity: 0.5;
 }
 
@@ -61,7 +61,7 @@
   right: -100px;
   width: 450px;
   height: 450px;
-  background: radial-gradient(circle, rgba(255, 166, 0, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(245, 185, 58, 0.12) 0%, transparent 70%);
   opacity: 0.35;
 }
 
@@ -109,7 +109,7 @@
 }
 
 .team-nav-brand a:hover {
-  color: #ffa600;
+  color: var(--gold);
 }
 
 .team-nav-links {
@@ -152,8 +152,8 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #ffa600;
-  box-shadow: 0 0 10px rgba(255, 166, 0, 0.8);
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(245, 185, 58, 0.8);
 }
 
 .team-logo-wrap {
@@ -164,8 +164,8 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 2px solid rgba(255, 166, 0, 0.45);
-  box-shadow: 0 0 16px rgba(255, 166, 0, 0.25);
+  border: 2px solid rgba(245, 185, 58, 0.45);
+  box-shadow: 0 0 16px rgba(245, 185, 58, 0.25);
   transition: transform 0.25s ease, border-color 0.25s ease;
   background: #000;
   flex-shrink: 0;
@@ -173,8 +173,8 @@
 
 .team-logo-wrap:hover {
   transform: scale(1.12);
-  border-color: #ffa600;
-  box-shadow: 0 0 22px rgba(255, 166, 0, 0.5);
+  border-color: var(--gold);
+  box-shadow: 0 0 22px rgba(245, 185, 58, 0.5);
 }
 
 .team-logo-img {
@@ -196,9 +196,9 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #ffa600;
-  background: rgba(255, 166, 0, 0.08);
-  border: 1px solid rgba(255, 166, 0, 0.25);
+  color: var(--gold);
+  background: rgba(245, 185, 58, 0.08);
+  border: 1px solid rgba(245, 185, 58, 0.25);
   padding: 7px 15px;
   border-radius: 20px;
   cursor: pointer;
@@ -206,10 +206,10 @@
 }
 
 .team-back-btn:hover {
-  background: #ffa600;
-  color: #080808;
+  background: var(--gold);
+  color: var(--bg);
   transform: translateX(-3px);
-  box-shadow: 0 0 15px rgba(255, 166, 0, 0.4);
+  box-shadow: 0 0 15px rgba(245, 185, 58, 0.4);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -242,9 +242,9 @@
   font-weight: 800;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #ffa600;
-  background: rgba(255, 166, 0, 0.1);
-  border: 1px solid rgba(255, 166, 0, 0.28);
+  color: var(--gold);
+  background: rgba(245, 185, 58, 0.1);
+  border: 1px solid rgba(245, 185, 58, 0.28);
   padding: 5px 16px;
   border-radius: 100px;
   margin-bottom: 6px;
@@ -272,19 +272,19 @@
   letter-spacing: -0.03em;
 }
 
-/* Yellow Accent for "Team" matching footer (#ffa600) and Events title glow */
+/* Yellow Accent for "Team" matching footer (var(--gold)) and Events title glow */
 .title-team {
-  color: #ffa600;
+  color: var(--gold);
   letter-spacing: -0.03em;
-  text-shadow: 0 0 50px rgba(255, 166, 0, 0.45);
+  text-shadow: 0 0 50px rgba(245, 185, 58, 0.45);
 }
 
 /* Center Accent Underline Bar */
 .team-title-bar {
   width: 58px;
   height: 3.5px;
-  background: #ffa600;
-  box-shadow: 0 0 14px rgba(255, 166, 0, 0.6);
+  background: var(--gold);
+  box-shadow: 0 0 14px rgba(245, 185, 58, 0.6);
   border-radius: 2px;
   margin: 6px auto 8px;
 }
@@ -337,10 +337,10 @@
 }
 
 .team-year-tab.active {
-  color: #080808;
-  background: #ffa600;
+  color: var(--bg);
+  background: var(--gold);
   font-weight: 800;
-  box-shadow: 0 0 16px rgba(255, 166, 0, 0.45);
+  box-shadow: 0 0 16px rgba(245, 185, 58, 0.45);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -385,14 +385,14 @@
   font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #ffa600;
+  color: var(--gold);
   white-space: nowrap;
 }
 
 .team-tier-rule {
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, rgba(255, 166, 0, 0.3) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%);
+  background: linear-gradient(90deg, rgba(245, 185, 58, 0.3) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -462,7 +462,7 @@
 }
 
 .poster-member-card.card-dark:hover {
-  border-color: rgba(255, 166, 0, 0.45);
+  border-color: rgba(245, 185, 58, 0.45);
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
 }
 
@@ -476,8 +476,8 @@
 }
 
 .poster-member-card.card-dark .poster-underline {
-  background: #ffa600;
-  box-shadow: 0 0 8px rgba(255, 166, 0, 0.35);
+  background: var(--gold);
+  box-shadow: 0 0 8px rgba(245, 185, 58, 0.35);
 }
 
 .poster-member-card.card-dark .poster-role {
@@ -485,28 +485,28 @@
 }
 
 .poster-member-card.card-dark .poster-linkedin-link {
-  background: rgba(255, 166, 0, 0.12);
-  color: #ffa600;
-  border: 1px solid rgba(255, 166, 0, 0.3);
+  background: rgba(245, 185, 58, 0.12);
+  color: var(--gold);
+  border: 1px solid rgba(245, 185, 58, 0.3);
 }
 
 .poster-member-card.card-dark .poster-linkedin-link:hover {
-  background: #ffa600;
-  color: #080808;
+  background: var(--gold);
+  color: var(--bg);
 }
 
-/* 2. YELLOW THEME CARD (Matches Footer's #ffa600) */
+/* 2. YELLOW THEME CARD (Matches Footer's var(--gold)) */
 .poster-member-card.card-yellow,
 .poster-member-card.card-orange {
-  background: #ffa600;
-  border: 1px solid rgba(255, 166, 0, 0.7);
-  box-shadow: 0 14px 34px rgba(255, 166, 0, 0.22);
+  background: var(--gold);
+  border: 1px solid rgba(245, 185, 58, 0.7);
+  box-shadow: 0 14px 34px rgba(245, 185, 58, 0.22);
 }
 
 .poster-member-card.card-yellow:hover,
 .poster-member-card.card-orange:hover {
   transform: translateY(-6px);
-  box-shadow: 0 22px 50px rgba(255, 166, 0, 0.45);
+  box-shadow: 0 22px 50px rgba(245, 185, 58, 0.45);
 }
 
 .poster-member-card.card-yellow .poster-avatar-backdrop,
@@ -534,7 +534,7 @@
 .poster-member-card.card-yellow .poster-linkedin-link,
 .poster-member-card.card-orange .poster-linkedin-link {
   background: #08080a;
-  color: #ffa600;
+  color: var(--gold);
 }
 
 .poster-member-card.card-yellow .poster-linkedin-link:hover,
@@ -599,7 +599,7 @@
 
 .poster-member-card.card-yellow .poster-initials,
 .poster-member-card.card-orange .poster-initials {
-  color: #ffa600;
+  color: var(--gold);
 }
 
 .poster-user-silhouette {
@@ -614,7 +614,7 @@
 
 .poster-member-card.card-yellow .poster-user-silhouette,
 .poster-member-card.card-orange .poster-user-silhouette {
-  color: #ffa600;
+  color: var(--gold);
 }
 
 /* ─────────────────────────────────────────────────────────

@@ -1,15 +1,21 @@
 :root {
-  /* Palette (dual-tone: black plus a deep warm glow, like the reference's teal on black) */
-  --bg: #0A0A0A;
-  --bg-warm: #1A1208;
-  --bg-warm-2: #2A1C0A;
+  /* Midnight and Gold theme palette */
+  --bg: #070A12;
+  --bg-2: #0C1220;
+  --bg-3: #121B30;
+  --surface: rgba(18, 27, 48, 0.62);
+  --border: rgba(245, 185, 58, 0.16);
   --gold: #F5B93A;
-  --gold-soft: rgba(245, 185, 58, 0.12);
-  --glow: rgba(245, 185, 58, 0.16);
-  --surface: rgba(30, 22, 10, 0.55);
-  --border: rgba(245, 185, 58, 0.18);
-  --text: #EDEDED;
-  --muted: #9A9384;
+  --gold-bright: #FFD36B;
+  --gold-deep: #C98A12;
+  --glow: rgba(245, 185, 58, 0.14);
+  --blue: #4F8CFF;
+  --text: #F2F4F8;
+  --muted: #9AA4B8;
+
+  /* Featured Events golden glow layers */
+  --events-glow-1: radial-gradient(ellipse 75% 60% at 50% 55%, rgba(247, 198, 90, 0.34) 0%, rgba(245, 185, 58, 0.16) 38%, rgba(245, 185, 58, 0.05) 62%, transparent 78%);
+  --events-glow-2: radial-gradient(ellipse 90% 40% at 50% 100%, rgba(245, 185, 58, 0.18), transparent 70%);
 
   /* Typography */
   --font-hero: 'Orbitron', 'Eurostile', 'Segoe UI', sans-serif;
@@ -19,10 +25,10 @@
 
   /* Backward compatibility for inner pages */
   --bg-primary: var(--bg);
-  --bg-card: rgba(26, 18, 8, 0.7);
+  --bg-card: var(--surface);
   --text-primary: var(--text);
   --text-secondary: var(--muted);
-  --text-muted: #7A7365;
+  --text-muted: #7A859E;
   --accent-orange: var(--gold);
   --accent-orange-glow: var(--glow);
   --border-subtle: var(--border);
@@ -67,7 +73,7 @@ html, body {
   min-height: 100%;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  overflow-x: hidden;
+  overflow-x: clip;
   scroll-behavior: smooth;
   font-family: var(--font-main);
 }
@@ -81,9 +87,9 @@ html, body {
   width: 46px;
   height: 46px;
   place-items: center;
-  color: #ffa600;
+  color: var(--gold);
   background: transparent;
-  border: 1px solid rgba(255, 210, 122, 0.85);
+  border: 1px solid var(--border);
   border-radius: 50%;
   box-shadow: none;
   transform: translateX(-50%);
@@ -92,7 +98,8 @@ html, body {
 
 .page-jump-button:hover {
   transform: translateX(-50%) scale(1.08);
-  background: rgba(255, 166, 0, 0.1);
+  background: var(--glow);
+  border-color: var(--gold);
 }
 
 .page-jump-button.is-up {
@@ -155,19 +162,19 @@ input, button, textarea, select {
 }
 
 ::-webkit-scrollbar-track {
-  background: #080808;
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #222222;
+  background: var(--bg-3);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ffa600;
+  background: var(--gold);
 }
 
 ::selection {
-  background: #ffa600;
-  color: #080808;
+  background: var(--gold);
+  color: #0B1020;
 }

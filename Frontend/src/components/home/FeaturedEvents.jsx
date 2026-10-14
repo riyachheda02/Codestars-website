@@ -2,6 +2,48 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { featuredEventsData } from '../../data/home';
 
+const DEFAULT_AUTOPLAY_INTERVAL = 4000;
+const DEFAULT_ARROW_PAUSE = 10000;
+const AUTOPLAY_TRANSITION_MS = 1200;
+const MANUAL_TRANSITION_MS = 650;
+
+// Perspective and 3D depth parameters
+const STAGE_PERSPECTIVE = 1200;
+
+// Apparent design targets for card layout (what the user should visually see)
+const APPARENT_TARGETS = {
+  0: { apparentScale: 1.0, apparentTxPercent: 0, tz: 0, rotY: 0, opacity: 1, dimmer: 0, parallax: 0 },
+  1: { apparentScale: 0.82, apparentTxPercent: 58, tz: -140, rotY: 28, opacity: 1, dimmer: 0.45, parallax: 6 },
+  2: { apparentScale: 0.66, apparentTxPercent: 92, tz: -280, rotY: 38, opacity: 1, dimmer: 0.70, parallax: 10 },
+  3: { apparentScale: 0.50, apparentTxPercent: 120, tz: -420, rotY: 42, opacity: 0, dimmer: 0.90, parallax: 14 },
+};
+
+/**
+ * Derives CSS scale and translateX percentage compensated for 3D perspective foreshortening.
+ * Under perspective P and depth |z|:
+ * foreshortening factor k = P / (P + |z|)
+ * cssScale = apparentScale / k
+ * cssTxPercent = apparentTxPercent / k
+ */
+function getCompensatedCardMetrics(absOffset, sign) {
+  const target = APPARENT_TARGETS[absOffset] || APPARENT_TARGETS[3];
+  const k = STAGE_PERSPECTIVE / (STAGE_PERSPECTIVE + Math.abs(target.tz));
+
+  const cssScale = target.apparentScale / k;
+  const cssTxPercent = (target.apparentTxPercent / k) * sign;
+  const rotY = target.rotY * -sign;
+
+  return {
+    cssScale,
+    cssTxPercent,
+    tz: target.tz,
+    rotY,
+    opacity: target.opacity,
+    dimmer: target.dimmer,
+    parallax: target.parallax * -sign,
+  };
+}
+
 export default function FeaturedEvents({ onNavigate }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hasEntered, setHasEntered] = useState(false);
@@ -9,18 +51,61 @@ export default function FeaturedEvents({ onNavigate }) {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [kenBurnsKey, setKenBurnsKey] = useState(0);
+
+  // Autoplay state: 'running' | 'paused'
+  const [autoplayMode, setAutoplayMode] = useState('running');
+  const [transitionDuration, setTransitionDuration] = useState(MANUAL_TRANSITION_MS);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const sectionRef = useRef(null);
   const stageRef = useRef(null);
   const isTransitioningRef = useRef(false);
   const transitionTimerRef = useRef(null);
+  const autoplayTimerRef = useRef(null);
   const dragStartXRef = useRef(null);
   const dragStartTimeRef = useRef(0);
   const lastClientXRef = useRef(0);
   const isSectionVisibleRef = useRef(false);
+  const activeIndexRef = useRef(0);
+  const autoplayModeRef = useRef('running');
+
+  // Keep refs in sync for timer callbacks
+  activeIndexRef.current = activeIndex;
+  autoplayModeRef.current = autoplayMode;
 
   const total = featuredEventsData.length;
+
+  // Check query params for test overrides or slowmo debug mode (?slowmo=5)
+  const getIntervals = useCallback(() => {
+    if (typeof window !== 'undefined' && window.__COVERFLOW_CONFIG__) {
+      return {
+        interval: window.__COVERFLOW_CONFIG__.interval || DEFAULT_AUTOPLAY_INTERVAL,
+        pause: window.__COVERFLOW_CONFIG__.pause || DEFAULT_ARROW_PAUSE,
+      };
+    }
+    return {
+      interval: DEFAULT_AUTOPLAY_INTERVAL,
+      pause: DEFAULT_ARROW_PAUSE,
+    };
+  }, []);
+
+  const getSlowmoMultiplier = useCallback(() => {
+    if (typeof window === 'undefined') return 1;
+    const params = new URLSearchParams(window.location.search);
+    const slowmo = parseFloat(params.get('slowmo'));
+    return !isNaN(slowmo) && slowmo > 0 ? slowmo : 1;
+  }, []);
+
+  // Preload and decode all event images before carousel display
+  useEffect(() => {
+    featuredEventsData.forEach((event) => {
+      const img = new Image();
+      img.src = event.image;
+      if (img.decode) {
+        img.decode().catch(() => {});
+      }
+    });
+  }, []);
 
   // Check prefers-reduced-motion
   useEffect(() => {
@@ -31,14 +116,121 @@ export default function FeaturedEvents({ onNavigate }) {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Entrance Observer (at ~35% visibility, once) & pause animations when off screen
+  // Slide navigation with duration control (1200ms for autoplay, 650ms for manual)
+  const goToSlide = useCallback((newIndex, isAuto = false) => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    setIsTransitioning(true);
+
+    const mult = getSlowmoMultiplier();
+    const baseDur = isAuto ? AUTOPLAY_TRANSITION_MS : MANUAL_TRANSITION_MS;
+    const dur = Math.round(baseDur * mult);
+
+    setTransitionDuration(dur);
+    setActiveIndex(newIndex);
+    setTilt({ x: 0, y: 0 });
+
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+    }
+    transitionTimerRef.current = setTimeout(() => {
+      isTransitioningRef.current = false;
+      setIsTransitioning(false);
+    }, dur);
+  }, [getSlowmoMultiplier]);
+
+  // Decode the next slide's image before autoplay tick initiates slide
+  const preloadNextSlideImage = useCallback((nextIdx) => {
+    const nextEvent = featuredEventsData[nextIdx];
+    if (nextEvent && nextEvent.image) {
+      const img = new Image();
+      img.src = nextEvent.image;
+      if (img.decode) {
+        return img.decode().catch(() => {});
+      }
+    }
+    return Promise.resolve();
+  }, []);
+
+  // Core timer schedule function
+  const scheduleAutoplay = useCallback((delayMs) => {
+    if (autoplayTimerRef.current) {
+      clearTimeout(autoplayTimerRef.current);
+      autoplayTimerRef.current = null;
+    }
+
+    if (reducedMotion) return;
+
+    autoplayTimerRef.current = setTimeout(async () => {
+      if (autoplayModeRef.current === 'paused') {
+        setAutoplayMode('running');
+      }
+
+      if (isSectionVisibleRef.current && document.visibilityState === 'visible') {
+        const next = (activeIndexRef.current + 1) % total;
+        await preloadNextSlideImage(next);
+        goToSlide(next, true);
+      }
+
+      const { interval } = getIntervals();
+      scheduleAutoplay(interval);
+    }, delayMs);
+  }, [reducedMotion, total, goToSlide, getIntervals, preloadNextSlideImage]);
+
+  // Restart running countdown
+  const restartRunningAutoplay = useCallback(() => {
+    setAutoplayMode('running');
+    const { interval } = getIntervals();
+    scheduleAutoplay(interval);
+  }, [getIntervals, scheduleAutoplay]);
+
+  // Trigger 10s pause: ONLY on arrow buttons click
+  const triggerArrowPause = useCallback(() => {
+    setAutoplayMode('paused');
+    const { pause } = getIntervals();
+    scheduleAutoplay(pause);
+  }, [getIntervals, scheduleAutoplay]);
+
+  const nextSlide = useCallback((fromArrow = false) => {
+    if (fromArrow) {
+      triggerArrowPause();
+    } else {
+      restartRunningAutoplay();
+    }
+    goToSlide((activeIndexRef.current + 1) % total, false);
+  }, [total, goToSlide, triggerArrowPause, restartRunningAutoplay]);
+
+  const prevSlide = useCallback((fromArrow = false) => {
+    if (fromArrow) {
+      triggerArrowPause();
+    } else {
+      restartRunningAutoplay();
+    }
+    goToSlide((activeIndexRef.current - 1 + total) % total, false);
+  }, [total, goToSlide, triggerArrowPause, restartRunningAutoplay]);
+
+  const handleDotClick = useCallback((index) => {
+    restartRunningAutoplay();
+    goToSlide(index, false);
+  }, [restartRunningAutoplay, goToSlide]);
+
+  // Entrance Observer & pause animations when off screen
   useEffect(() => {
     if (!sectionRef.current) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         isSectionVisibleRef.current = entry.isIntersecting;
-        if (entry.isIntersecting && !hasEntered) {
-          setHasEntered(true);
+        if (entry.isIntersecting) {
+          if (!hasEntered) setHasEntered(true);
+          if (!autoplayTimerRef.current && !reducedMotion) {
+            const { interval } = getIntervals();
+            scheduleAutoplay(interval);
+          }
+        } else {
+          if (autoplayTimerRef.current) {
+            clearTimeout(autoplayTimerRef.current);
+            autoplayTimerRef.current = null;
+          }
         }
       },
       { threshold: 0.35 }
@@ -46,42 +238,37 @@ export default function FeaturedEvents({ onNavigate }) {
 
     observer.observe(sectionRef.current);
     return () => observer.disconnect();
-  }, [hasEntered]);
+  }, [hasEntered, reducedMotion, getIntervals, scheduleAutoplay]);
 
-  // Clean up any pending transition timer on unmount
+  // Document visibility listener
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (autoplayTimerRef.current) {
+          clearTimeout(autoplayTimerRef.current);
+          autoplayTimerRef.current = null;
+        }
+      } else {
+        if (isSectionVisibleRef.current && !reducedMotion) {
+          const { interval } = getIntervals();
+          scheduleAutoplay(interval);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [reducedMotion, getIntervals, scheduleAutoplay]);
+
+  // Clean up timers on unmount
   useEffect(() => {
     return () => {
-      if (transitionTimerRef.current) {
-        clearTimeout(transitionTimerRef.current);
-      }
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
     };
   }, []);
 
-  // Slide navigation with 450ms navigation lock
-  const goToSlide = useCallback((newIndex) => {
-    if (isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
-    setActiveIndex(newIndex);
-    setTilt({ x: 0, y: 0 });
-    setKenBurnsKey((k) => k + 1);
-
-    if (transitionTimerRef.current) {
-      clearTimeout(transitionTimerRef.current);
-    }
-    transitionTimerRef.current = setTimeout(() => {
-      isTransitioningRef.current = false;
-    }, 450);
-  }, []);
-
-  const nextSlide = useCallback(() => {
-    goToSlide((activeIndex + 1) % total);
-  }, [activeIndex, total, goToSlide]);
-
-  const prevSlide = useCallback(() => {
-    goToSlide((activeIndex - 1 + total) % total);
-  }, [activeIndex, total, goToSlide]);
-
-  // Keyboard navigation: only while section is focused or in view
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isSectionVisibleRef.current) return;
@@ -90,10 +277,10 @@ export default function FeaturedEvents({ onNavigate }) {
       }
       if (e.key === 'ArrowRight') {
         e.preventDefault();
-        nextSlide();
+        nextSlide(false);
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        prevSlide();
+        prevSlide(false);
       }
     };
 
@@ -101,7 +288,7 @@ export default function FeaturedEvents({ onNavigate }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [nextSlide, prevSlide]);
 
-  // Pointer drag & swipe handling with pointer capture and robust release
+  // Pointer drag & swipe handling
   const endDrag = useCallback((e) => {
     if (!dragStartXRef.current && dragStartXRef.current !== 0) return;
 
@@ -110,21 +297,19 @@ export default function FeaturedEvents({ onNavigate }) {
         if (stageRef.current.hasPointerCapture(e.pointerId)) {
           stageRef.current.releasePointerCapture(e.pointerId);
         }
-      } catch (err) {
-        // Ignore pointer capture errors if already released
-      }
+      } catch (err) {}
     }
 
     const currentOffset = dragOffset;
     const stageWidth = stageRef.current ? stageRef.current.offsetWidth : 600;
-    const threshold = stageWidth * 0.18; // ~18% card/stage width
+    const threshold = stageWidth * 0.18;
     const elapsed = Date.now() - dragStartTimeRef.current;
     const velocity = Math.abs(currentOffset) / Math.max(elapsed, 1);
 
     if (currentOffset < -threshold || (currentOffset < -25 && velocity > 0.4)) {
-      nextSlide();
+      nextSlide(false);
     } else if (currentOffset > threshold || (currentOffset > 25 && velocity > 0.4)) {
-      prevSlide();
+      prevSlide(false);
     }
 
     dragStartXRef.current = null;
@@ -152,7 +337,6 @@ export default function FeaturedEvents({ onNavigate }) {
 
   const handlePointerDown = (e) => {
     if (isTransitioningRef.current) return;
-    // Only primary button
     if (e.buttons !== 1) return;
 
     dragStartXRef.current = e.clientX;
@@ -164,9 +348,7 @@ export default function FeaturedEvents({ onNavigate }) {
     if (stageRef.current && e.pointerId !== undefined) {
       try {
         stageRef.current.setPointerCapture(e.pointerId);
-      } catch (err) {
-        // Fallback if not supported
-      }
+      } catch (err) {}
     }
   };
 
@@ -181,15 +363,14 @@ export default function FeaturedEvents({ onNavigate }) {
     setDragOffset(diff);
   };
 
-  // Center card 3D tilt tracking: onPointerMove/Leave on center card ONLY (max 5 deg)
+  // Center card 3D tilt tracking: only while not transitioning or dragging
   const handleCenterCardPointerMove = (e) => {
-    if (reducedMotion || isDragging || window.matchMedia('(pointer: coarse)').matches) return;
+    if (reducedMotion || isDragging || isTransitioning || window.matchMedia('(pointer: coarse)').matches) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    // Limit to max 5 degrees
     const tiltX = Math.max(-5, Math.min(5, ((y - centerY) / centerY) * -5));
     const tiltY = Math.max(-5, Math.min(5, ((x - centerX) / centerX) * 5));
     setTilt({ x: tiltX, y: tiltY });
@@ -199,7 +380,6 @@ export default function FeaturedEvents({ onNavigate }) {
     setTilt({ x: 0, y: 0 });
   };
 
-  // Click on center card opens event page
   const handleCenterCardClick = (event) => {
     if (isDragging || Math.abs(dragOffset) > 5) return;
     if (event.isExternal && event.actionUrl) {
@@ -220,10 +400,14 @@ export default function FeaturedEvents({ onNavigate }) {
       className={`home-section featured-events-section ${hasEntered ? 'is-entered' : ''}`}
       aria-label="Featured Events"
       tabIndex={0}
+      style={{ '--dur': `${transitionDuration}ms` }}
     >
-      {/* Background Concentric Circles & Warm Ambient Glow */}
+      {/* Background Concentric Circles */}
       <div className="events-bg-concentric-circles" aria-hidden="true" />
+      {/* Base radial glow */}
       <div className="events-bg-warm-radial" aria-hidden="true" />
+      {/* Compositor-only transition glow wash layer */}
+      <div className={`events-bg-glow-wash ${isTransitioning ? 'is-active' : ''}`} aria-hidden="true" />
 
       <div className="section-container">
         {/* Section Heading: "EVENTS" with outward underline */}
@@ -247,69 +431,63 @@ export default function FeaturedEvents({ onNavigate }) {
         >
           <div className="coverflow-track">
             {featuredEventsData.map((event, index) => {
+              // Wrap offset around symmetrically (-total/2 to +total/2)
               let offset = index - activeIndex;
               if (offset > total / 2) offset -= total;
               if (offset < -total / 2) offset += total;
+              // For even total (6): if offset is -3, check if it's strictly opposite
+              // To ensure perfect symmetry between -2 and +2 at rest
+              const absOffset = Math.abs(offset);
+              const sign = offset === 0 ? 0 : offset > 0 ? 1 : -1;
 
-              const isVisible = offset >= -2 && offset <= 2;
+              // Only render offsets -2..+2 at rest, and +/-3 while transitioning
+              const isAtRestOpposite = absOffset > 2 && !isTransitioning;
+              const isRendered = absOffset <= 3 && !isAtRestOpposite;
               const isCenter = offset === 0;
 
-              // Compute transform based on offset
-              // offset 0: scale 1, no rotation, z-index 10
-              // offset ±1: translateX ±58%, rotateY ∓28deg, scale 0.82, z-index 9
-              // offset ±2: translateX ±92%, rotateY ∓38deg, scale 0.66, z-index 8
-              let txPercent = 0;
-              let rotY = 0;
-              let scale = 1;
-              let overlayOpacity = 0;
+              // Derive perspective-compensated metrics from helper function
+              const metrics = getCompensatedCardMetrics(Math.min(3, absOffset), sign);
 
-              if (offset === 0) {
-                txPercent = 0;
-                rotY = 0;
-                scale = 1;
-                overlayOpacity = 0;
-              } else if (Math.abs(offset) === 1) {
-                txPercent = offset * 58;
-                rotY = -offset * 28;
-                scale = 0.82;
-                overlayOpacity = 0.45;
-              } else if (Math.abs(offset) === 2) {
-                txPercent = offset * 92;
-                rotY = -offset * 38;
-                scale = 0.66;
-                overlayOpacity = 0.70;
-              }
+              let txPercent = metrics.cssTxPercent;
+              let rotY = metrics.rotY;
+              let tz = metrics.tz;
+              let scale = metrics.cssScale;
+              let opacity = absOffset >= 3 ? 0 : metrics.opacity;
+              let overlayOpacity = metrics.dimmer;
+              let imgParallax = metrics.parallax;
 
-              // During entrance before hasEntered: cards start stacked at center
+              // During entrance before hasEntered: cards stack at center
               if (!hasEntered && !reducedMotion) {
                 txPercent = 0;
                 rotY = 0;
+                tz = 0;
                 scale = 1;
+                opacity = 1;
                 overlayOpacity = 0;
+                imgParallax = 0;
               }
 
-              // Dynamic drag offset in pixels applied to transform if dragging
               const dragTranslate = isDragging ? `${dragOffset}px` : '0px';
 
-              // Tilt on center card
-              const tiltTransform = (isCenter && !reducedMotion && !isDragging)
+              // Tilt on center card (only when at rest, not transitioning)
+              const tiltTransform = (isCenter && !reducedMotion && !isDragging && !isTransitioning)
                 ? `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`
                 : '';
 
-              const zIndex = isVisible ? 10 - Math.abs(offset) : 1;
+              const fanDelay = hasEntered ? '0ms' : `${absOffset * 70}ms`;
 
-              // Fan-out stagger delay on initial entrance (70ms stagger outward from center)
-              const fanDelay = hasEntered ? '0ms' : `${Math.abs(offset) * 70}ms`;
+              // Continuously sorted 3D transform with translate3d & translateZ
+              // Center origin with calc(-50% + tx) and -50%
+              const cardTransform = `translate3d(calc(-50% + ${txPercent}% + ${dragTranslate}), -50%, ${tz}px) rotateY(${rotY}deg) ${tiltTransform} scale(${scale})`;
 
               const cardStyle = {
-                transform: `translateX(calc(-50% + ${txPercent}% + ${dragTranslate})) translateZ(${isCenter ? '0px' : '-100px'}) rotateY(${rotY}deg) ${tiltTransform} scale(${scale})`,
-                zIndex,
-                visibility: isVisible ? 'visible' : 'hidden',
-                pointerEvents: isVisible ? 'auto' : 'none',
+                transform: cardTransform,
+                opacity,
+                visibility: isRendered ? 'visible' : 'hidden',
+                pointerEvents: (isRendered && absOffset <= 2) ? 'auto' : 'none',
                 transitionDelay: fanDelay,
               };
 
-              // Glare style for center card tilt
               const glareOpacity = isCenter && !reducedMotion && (Math.abs(tilt.x) > 0 || Math.abs(tilt.y) > 0)
                 ? (Math.abs(tilt.x) + Math.abs(tilt.y)) / 10 * 0.4
                 : 0;
@@ -319,7 +497,7 @@ export default function FeaturedEvents({ onNavigate }) {
               return (
                 <div
                   key={event.id}
-                  className={`coverflow-card ${isCenter ? 'is-center' : 'is-side'} ${!isVisible ? 'is-hidden' : ''}`}
+                  className={`coverflow-card ${isCenter ? 'is-center' : 'is-side'} ${isTransitioning ? 'is-transitioning' : ''}`}
                   style={cardStyle}
                   onPointerMove={isCenter ? handleCenterCardPointerMove : undefined}
                   onPointerLeave={isCenter ? handleCenterCardPointerLeave : undefined}
@@ -328,7 +506,7 @@ export default function FeaturedEvents({ onNavigate }) {
                     if (isCenter) {
                       handleCenterCardClick(event);
                     } else {
-                      goToSlide(index);
+                      handleDotClick(index);
                     }
                   }}
                   role={isCenter ? 'button' : 'group'}
@@ -343,14 +521,17 @@ export default function FeaturedEvents({ onNavigate }) {
                 >
                   <div className="coverflow-card-inner">
                     <img
-                      key={isCenter ? `center-poster-${kenBurnsKey}` : `poster-${event.id}`}
                       src={event.image}
                       alt={event.description || event.title}
-                      className={`coverflow-card-img ${isCenter && !reducedMotion ? 'is-ken-burns' : ''}`}
-                      loading={isCenter ? 'eager' : 'lazy'}
+                      className="coverflow-card-img"
+                      style={{
+                        transform: imgParallax ? `scale(1.08) translate3d(${imgParallax}%, 0, 0)` : 'scale(1.02) translate3d(0, 0, 0)',
+                      }}
+                      loading="eager"
+                      decoding="async"
                       draggable={false}
                     />
-                    {/* Dark Dimming Overlay for non-center cards */}
+                    {/* Dark Dimming Overlay for non-center cards (opacity-only) */}
                     <div
                       className="coverflow-card-dimmer"
                       style={{ opacity: overlayOpacity }}
@@ -379,31 +560,36 @@ export default function FeaturedEvents({ onNavigate }) {
         <div className="coverflow-controls-row">
           <button
             type="button"
-            className="coverflow-nav-arrow-btn"
-            onClick={prevSlide}
+            className="coverflow-nav-arrow-btn coverflow-prev-btn"
+            onClick={() => prevSlide(true)}
             aria-label="Previous event"
           >
             <ArrowLeft size={18} className="nav-arrow-icon nav-arrow-left" />
           </button>
 
           <div className="coverflow-pagination-dots" role="tablist" aria-label="Event slides">
-            {featuredEventsData.map((event, i) => (
-              <button
-                key={event.id || i}
-                type="button"
-                className={`coverflow-dot ${i === activeIndex ? 'is-active-pill' : ''}`}
-                onClick={() => goToSlide(i)}
-                aria-label={`Go to slide ${i + 1}`}
-                role="tab"
-                aria-selected={i === activeIndex}
-              />
-            ))}
+            {featuredEventsData.map((event, i) => {
+              const isActive = i === activeIndex;
+              return (
+                <button
+                  key={event.id || i}
+                  type="button"
+                  className={`coverflow-dot ${isActive ? `is-active-pill is-${autoplayMode}` : ''}`}
+                  onClick={() => handleDotClick(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  role="tab"
+                  aria-selected={isActive}
+                >
+                  {isActive && <span className="coverflow-dot-fill" aria-hidden="true" />}
+                </button>
+              );
+            })}
           </div>
 
           <button
             type="button"
-            className="coverflow-nav-arrow-btn"
-            onClick={nextSlide}
+            className="coverflow-nav-arrow-btn coverflow-next-btn"
+            onClick={() => nextSlide(true)}
             aria-label="Next event"
           >
             <ArrowRight size={18} className="nav-arrow-icon nav-arrow-right" />

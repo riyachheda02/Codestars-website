@@ -6,7 +6,6 @@ import {
   BookOpen,
   Users,
   Image as ImageIcon,
-  ArrowLeft,
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -29,8 +28,27 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
   const [scrolled, setScrolled] = useState(false);
   const [mergeProgress, setMergeProgress] = useState(currentRoute === 'home' ? 0 : 1);
   const [rawPVal, setRawPVal] = useState(currentRoute === 'home' ? 0 : 1);
+  const [navVisible, setNavVisible] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    if (currentRoute !== 'home') return true;
+    return !!sessionStorage.getItem('codestars_intro_played');
+  });
+  // Auto-hide state for inner pages (scrolled down past 120px)
+  const [isNavHiddenOnScroll, setIsNavHiddenOnScroll] = useState(false);
+
   const navRef = useRef(null);
   const logoSlotRef = useRef(null);
+  const lastScrollYRef = useRef(0);
+
+  useEffect(() => {
+    const handleReveal = () => setNavVisible(true);
+    window.addEventListener('codestars-navbar-reveal', handleReveal);
+    window.addEventListener('codestars-intro-complete', handleReveal);
+    return () => {
+      window.removeEventListener('codestars-navbar-reveal', handleReveal);
+      window.removeEventListener('codestars-intro-complete', handleReveal);
+    };
+  }, []);
 
   // Broadcast logo slot rect whenever needed for the hero wordmark landing coordinates
   const broadcastSlotRect = useCallback(() => {
@@ -54,40 +72,101 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
     return () => window.removeEventListener('resize', broadcastSlotRect);
   }, [broadcastSlotRect, currentRoute]);
 
-  // Scroll merge tracking
+  // Scroll merge tracking (Home page) & Auto-hide tracking (Inner pages)
   useEffect(() => {
-    if (currentRoute !== 'home') {
-      setMergeProgress(1);
-      setRawPVal(1);
-      setScrolled(true);
-      return undefined;
+    lastScrollYRef.current = window.scrollY || 0;
+
+    if (currentRoute === 'home') {
+      // Home page: no auto-hide, only merge logic
+      setIsNavHiddenOnScroll(false);
+
+      let frame;
+      const onScroll = () => {
+        const scrollY = window.scrollY;
+        const vh = window.innerHeight;
+        const rawP = Math.max(0, Math.min(1, scrollY / (0.8 * vh)));
+        const eased = rawP < 0.5 ? 4 * rawP * rawP * rawP : 1 - Math.pow(-2 * rawP + 2, 3) / 2;
+
+        setRawPVal(rawP);
+        setMergeProgress(eased);
+        setScrolled(scrollY > 20);
+        broadcastSlotRect();
+      };
+
+      const requestUpdate = () => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(onScroll);
+      };
+
+      onScroll();
+      window.addEventListener('scroll', requestUpdate, { passive: true });
+      return () => {
+        cancelAnimationFrame(frame);
+        window.removeEventListener('scroll', requestUpdate);
+      };
     }
 
-    let frame;
-    const onScroll = () => {
-      const scrollY = window.scrollY;
-      const vh = window.innerHeight;
-      // p = clamp(scrollY / (0.8 * window.innerHeight), 0, 1)
-      const rawP = Math.max(0, Math.min(1, scrollY / (0.8 * vh)));
-      // easeInOutCubic curve
-      const eased = rawP < 0.5 ? 4 * rawP * rawP * rawP : 1 - Math.pow(-2 * rawP + 2, 3) / 2;
+    // Inner pages:
+    setMergeProgress(1);
+    setRawPVal(1);
+    setScrolled(true);
+    setIsNavHiddenOnScroll(false);
 
-      setRawPVal(rawP);
-      setMergeProgress(eased);
-      setScrolled(scrollY > 20);
-      broadcastSlotRect();
+    let scrollRafId = null;
+
+    const handleInnerScroll = () => {
+      const currentScrollY = window.scrollY;
+      const prevScrollY = lastScrollYRef.current;
+      const delta = currentScrollY - prevScrollY;
+
+      if (currentScrollY < 80) {
+        setIsNavHiddenOnScroll(false);
+      } else if (Math.abs(delta) >= 8) {
+        if (delta > 0 && currentScrollY > 120) {
+          // Scrolling down past 120px: hide
+          setIsNavHiddenOnScroll(true);
+        } else if (delta < 0) {
+          // Scrolling up: show
+          setIsNavHiddenOnScroll(false);
+        }
+      }
+
+      lastScrollYRef.current = currentScrollY;
     };
 
-    const requestUpdate = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(onScroll);
+    const onScrollThrottled = () => {
+      if (scrollRafId) return;
+      scrollRafId = requestAnimationFrame(() => {
+        handleInnerScroll();
+        scrollRafId = null;
+      });
     };
 
-    onScroll();
-    window.addEventListener('scroll', requestUpdate, { passive: true });
+    // Keyboard focus & Tab key shows navbar
+    const handleKeyDown = (e) => {
+      if (e.key === 'Tab') {
+        setIsNavHiddenOnScroll(false);
+      }
+    };
+
+    const handleFocusIn = () => {
+      setIsNavHiddenOnScroll(false);
+    };
+
+    window.addEventListener('scroll', onScrollThrottled, { passive: true });
+    window.addEventListener('keydown', handleKeyDown);
+    const navEl = navRef.current;
+    if (navEl) {
+      navEl.addEventListener('focusin', handleFocusIn);
+    }
+
     return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', requestUpdate);
+      if (scrollRafId) cancelAnimationFrame(scrollRafId);
+      window.removeEventListener('scroll', onScrollThrottled);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (navEl) {
+        navEl.removeEventListener('focusin', handleFocusIn);
+      }
     };
   }, [currentRoute, broadcastSlotRect]);
 
@@ -112,18 +191,28 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Expand logo slot width as scroll progresses from 0 to 1
-  // On inner pages it is fully 145px
   const isInner = currentRoute !== 'home';
-  const logoSlotWidth = isInner ? 145 : Math.round(mergeProgress * 145);
-  // Docked & visible only when rawP reaches about 0.97
-  const isDocked = isInner || rawPVal >= 0.97;
+  const slotProgress = isInner ? 1 : Math.min(1, Math.max(0, rawPVal / 0.88));
+  const logoSlotWidth = isInner ? 145 : Math.round(slotProgress * 145);
+
+  let t = 0;
+  if (isInner) {
+    t = 1;
+  } else if (rawPVal <= 0.88) {
+    t = 0;
+  } else if (rawPVal >= 1.0) {
+    t = 1;
+  } else {
+    const x = (rawPVal - 0.88) / (1.0 - 0.88);
+    t = x * x * (3 - 2 * x); // smoothstep
+  }
 
   return (
     <>
       <header
         ref={navRef}
-        className={`codestars-navbar-pill ${scrolled ? 'is-scrolled' : ''} ${isInner ? 'is-inner-page' : ''} ${logoSlotWidth > 5 ? 'is-expanded' : ''}`}
+        data-testid="navbar"
+        className={`codestars-navbar-pill ${scrolled ? 'is-scrolled' : ''} ${isInner ? 'is-inner-page' : ''} ${logoSlotWidth > 5 ? 'is-expanded' : ''} ${!navVisible ? 'is-hidden-intro' : ''} ${isNavHiddenOnScroll ? 'is-nav-scroll-hidden' : ''}`}
         aria-label="Main Navigation"
       >
         <div className="navbar-pill-glass-filter" aria-hidden="true" />
@@ -137,22 +226,26 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
             className="navbar-logo-slot-expanding"
             style={{
               width: `${logoSlotWidth}px`,
-              opacity: isInner ? 1 : (mergeProgress > 0.02 ? 1 : 0),
+              opacity: isInner ? 1 : (logoSlotWidth > 0 ? 1 : 0),
             }}
           >
             <a
               href="#home"
-              className={`navbar-docked-logo ${isDocked ? 'is-visible' : ''}`}
+              className={`navbar-docked-logo ${t > 0.01 ? 'is-active-crossfade' : ''}`}
+              style={{
+                opacity: t,
+                pointerEvents: t > 0.5 ? 'auto' : 'none',
+              }}
               onClick={handleLogoClick}
               aria-label="DJS CodeStars Home"
-              tabIndex={isDocked ? 0 : -1}
+              tabIndex={t > 0.5 ? 0 : -1}
             >
               <span className="navbar-logo-djs">DJS</span>
               <span className="navbar-logo-codestars">CodeStars</span>
             </a>
           </div>
 
-          {/* Navigation Items (Short pill at rest when logo slot width is 0) */}
+          {/* Navigation Items */}
           <nav className="navbar-items-group" aria-label="Desktop menu">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
@@ -178,27 +271,14 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
               );
             })}
           </nav>
-
-          {/* Back to Home Button on inner pages */}
-          {isInner && (
-            <div className="navbar-back-wrap">
-              <button
-                type="button"
-                className="navbar-back-home-btn"
-                onClick={handleLogoClick}
-                title="Return to Home"
-                aria-label="Return to Home page"
-              >
-                <ArrowLeft size={14} />
-                <span>Back to Home</span>
-              </button>
-            </div>
-          )}
         </div>
       </header>
 
       {/* Mobile Bottom Dock (<= 640px) */}
-      <nav className="codestars-mobile-dock" aria-label="Mobile Navigation">
+      <nav
+        className={`codestars-mobile-dock ${isNavHiddenOnScroll ? 'is-dock-scroll-hidden' : ''}`}
+        aria-label="Mobile Navigation"
+      >
         <div className="mobile-dock-glass-filter" aria-hidden="true" />
         <div className="mobile-dock-glass-overlay" aria-hidden="true" />
         <div className="mobile-dock-inner">

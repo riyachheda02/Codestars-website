@@ -43,8 +43,32 @@ export default function Announcements({ onNavigate }) {
             const isExpanded = !!expanded[ann.id];
             const isUpdate = ann.type === 'UPDATE';
 
+            const handleCardPointerMove = (e) => {
+              if (window.matchMedia('(pointer: coarse)').matches) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              e.currentTarget.style.setProperty('--mx', `${x}px`);
+              e.currentTarget.style.setProperty('--my', `${y}px`);
+            };
+
+            const handleCardPointerLeave = (e) => {
+              e.currentTarget.style.removeProperty('--mx');
+              e.currentTarget.style.removeProperty('--my');
+            };
+
             return (
-              <div key={ann.id} className="announcement-item-card">
+              <div
+                key={ann.id}
+                className="announcement-item-card"
+                onPointerMove={handleCardPointerMove}
+                onPointerLeave={handleCardPointerLeave}
+              >
+                {/* Gold accent bar on left edge grows scaleY 0 to 1 on hover */}
+                <div className="announcement-left-accent-bar" aria-hidden="true" />
+                {/* Card spotlight element */}
+                <div className="announcement-card-spotlight" aria-hidden="true" />
+
                 {/* Left Square Date Box */}
                 <div className="announcement-date-box">
                   <span className="date-month">{ann.date.month}</span>
@@ -57,7 +81,7 @@ export default function Announcements({ onNavigate }) {
                     <h3 className="announcement-heading">{ann.title}</h3>
                     <span
                       className={`announcement-badge ${
-                        isUpdate ? 'badge-update-gold' : 'badge-event-soft'
+                        isUpdate ? 'badge-update-blue' : 'badge-event-gold'
                       }`}
                     >
                       {ann.type}
@@ -66,24 +90,26 @@ export default function Announcements({ onNavigate }) {
 
                   <p className="announcement-preview">{ann.shortDesc}</p>
 
-                  {/* Expandable full description */}
-                  {isExpanded && (
-                    <div className="announcement-expanded-content">
-                      <p className="announcement-full-desc">{ann.fullDesc}</p>
-                      {ann.linkText && ann.linkUrl && (
-                        <a
-                          href={ann.linkUrl}
-                          className="announcement-link-btn"
-                          target={ann.linkUrl.startsWith('http') ? '_blank' : undefined}
-                          rel={ann.linkUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
-                          onClick={(e) => handleLinkClick(e, ann.linkUrl)}
-                        >
-                          <span>{ann.linkText}</span>
-                          <ArrowUpRight size={14} />
-                        </a>
-                      )}
+                  {/* Expandable full description with smooth grid / height animation */}
+                  <div className={`announcement-expand-collapse-wrapper ${isExpanded ? 'is-expanded' : ''}`}>
+                    <div className="announcement-expand-collapse-inner">
+                      <div className="announcement-expanded-content">
+                        <p className="announcement-full-desc">{ann.fullDesc}</p>
+                        {ann.linkText && ann.linkUrl && (
+                          <a
+                            href={ann.linkUrl}
+                            className="announcement-link-btn"
+                            target={ann.linkUrl.startsWith('http') ? '_blank' : undefined}
+                            rel={ann.linkUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
+                            onClick={(e) => handleLinkClick(e, ann.linkUrl)}
+                          >
+                            <span>{ann.linkText}</span>
+                            <ArrowUpRight size={14} />
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Expand / Collapse toggle */}
                   <button
