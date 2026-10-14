@@ -184,10 +184,10 @@ export default function Footer({ onNavigate }) {
               </div>
 
               <div className="footer-contact-row">
-                <MapPin size={20} className="footer-contact-icon footer-map-icon" />
-                <address className="footer-address">
-                  DJ Sanghvi College of Engineering, Vile Parle West, Mumbai - 400056
-                </address>
+                <MapPin size={20} className="footer-contact-icon" />
+                <span className="footer-address-text">
+                  DJ Sanghvi College of Engineering, Vile Parle (West), Mumbai - 400056
+                </span>
               </div>
             </div>
           </div>

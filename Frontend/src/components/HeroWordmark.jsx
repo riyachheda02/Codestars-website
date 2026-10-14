@@ -26,6 +26,30 @@ export default function HeroWordmark({
     return { revealed: played, animDone: played, skipped: false };
   });
 
+  // Hero State tracking ('hero', 'toMerged', 'merged', 'toHero')
+  const [heroState, setHeroState] = useState(() => {
+    if (typeof document !== 'undefined') {
+      const root = document.querySelector('.codestars-homepage-root');
+      return root?.getAttribute('data-hero-state') || 'hero';
+    }
+    return 'hero';
+  });
+  const [isReversePhaseA, setIsReversePhaseA] = useState(false);
+
+  useEffect(() => {
+    if (previewMode) return;
+
+    const handleHeroStateChange = (e) => {
+      if (e.detail?.state) {
+        setHeroState(e.detail.state);
+        setIsReversePhaseA(!!e.detail.isPhaseA);
+      }
+    };
+
+    window.addEventListener('codestars-hero-state-change', handleHeroStateChange);
+    return () => window.removeEventListener('codestars-hero-state-change', handleHeroStateChange);
+  }, [previewMode]);
+
   const scrollYRef = useRef(0);
 
   useEffect(() => {
@@ -133,7 +157,24 @@ export default function HeroWordmark({
     };
   }, [measureAnchor, previewMode, customFont]);
 
-  // Track scroll position
+  // Progress state: driven by codestars-hero-progress or scroll fallback
+  const [heroProgress, setHeroProgress] = useState(0);
+
+  // Listen to codestars-hero-progress event
+  useEffect(() => {
+    if (previewMode) return;
+
+    const handleProgress = (e) => {
+      if (typeof e.detail?.progress === 'number') {
+        setHeroProgress(e.detail.progress);
+      }
+    };
+
+    window.addEventListener('codestars-hero-progress', handleProgress);
+    return () => window.removeEventListener('codestars-hero-progress', handleProgress);
+  }, [previewMode]);
+
+  // Track scroll position as fallback or direct scroll sync
   useEffect(() => {
     if (previewMode) return;
 
@@ -144,6 +185,12 @@ export default function HeroWordmark({
         const y = window.scrollY;
         scrollYRef.current = y;
         setScrollY(y);
+        // If scrolled past hero section directly without triggering custom event
+        if (y > 120 && heroProgress < 1) {
+          setHeroProgress(1);
+        } else if (y === 0 && heroProgress > 0) {
+          setHeroProgress(0);
+        }
       });
     };
 
@@ -152,15 +199,14 @@ export default function HeroWordmark({
       cancelAnimationFrame(frame);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [previewMode]);
+  }, [previewMode, heroProgress]);
 
   if ((currentRoute !== 'home' && !previewMode) || !isReady || !anchorRect) {
     return null;
   }
 
   // Scroll Progress Calculation
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
-  const rawP = previewMode ? 0 : Math.min(1, Math.max(0, scrollY / (0.8 * vh)));
+  const rawP = previewMode ? 0 : heroProgress;
 
   // Wordmark reaches its final rect at p = 0.88 or earlier
   // Progress for position & scale:
@@ -178,8 +224,18 @@ export default function HeroWordmark({
     t = x * x * (3 - 2 * x); // smoothstep
   }
 
-  // Fixed layer opacity: 1 - t
-  const layerOpacity = previewMode ? 1 : 1 - t;
+
+
+  // Fixed layer opacity:
+  // If merged or in reverse phase A: 0
+  // If rawP >= 0.98: 0
+  // Otherwise: 1 - t
+  let computedLayerOpacity = 0;
+  if (!previewMode && (heroState === 'merged' || isReversePhaseA || rawP >= 0.98)) {
+    computedLayerOpacity = 0;
+  } else {
+    computedLayerOpacity = previewMode ? 1 : 1 - t;
+  }
 
   // Measure navbar slot landing coordinates
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 780;
@@ -216,13 +272,16 @@ export default function HeroWordmark({
   const codeStarsFontSize = Math.min(92, Math.max(42, anchorRect.width * 0.165));
   const djsFontSize = Math.round(codeStarsFontSize * 0.38);
 
+  const isWordmarkHidden = computedLayerOpacity <= 0.001;
+
   return (
     <div
-      className={`hero-wordmark-fixed-layer ${previewMode ? 'is-preview-mode' : ''}`}
+      className={`hero-wordmark-fixed-layer ${previewMode ? 'is-preview-mode' : ''} ${isReversePhaseA ? 'is-phase-a' : ''}`}
       style={{
         transform: `translate3d(${currentX}px, ${currentY}px, 0) scale(${currentScale})`,
         transformOrigin: 'top left',
-        opacity: layerOpacity,
+        opacity: computedLayerOpacity,
+        visibility: isWordmarkHidden ? 'hidden' : 'visible',
         pointerEvents: 'none',
         width: `${anchorRect.width}px`,
         height: `${anchorRect.height}px`,

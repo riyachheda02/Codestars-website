@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowDown } from 'lucide-react';
 import { heroData } from '../data/home';
 import Starfield from '../components/home/Starfield';
@@ -97,7 +97,398 @@ export default function Home({ onNavigate }) {
     }
   }, []);
 
-  // Track scroll position
+  // Hero Merge State Machine: 'hero' | 'toMerged' | 'merged' | 'toHero'
+  const [heroState, setHeroState] = useState(() => {
+    if (typeof window !== 'undefined' && window.scrollY > 40) return 'merged';
+    return 'hero';
+  });
+  const heroStateRef = useRef(typeof window !== 'undefined' && window.scrollY > 40 ? 'merged' : 'hero');
+  const [heroMergeProgress, setHeroMergeProgress] = useState(typeof window !== 'undefined' && window.scrollY > 40 ? 1 : 0);
+  const heroMergeProgressRef = useRef(typeof window !== 'undefined' && window.scrollY > 40 ? 1 : 0);
+  const isAnimatingRef = useRef(false);
+  const animCancelRef = useRef(null);
+  const [sectionAnimStyle, setSectionAnimStyle] = useState(null);
+  const [isReversePhaseA, setIsReversePhaseA] = useState(false);
+
+  const updateHeroState = useCallback((nextState, isPhaseA = false) => {
+    heroStateRef.current = nextState;
+    setHeroState(nextState);
+    setIsReversePhaseA(isPhaseA);
+    window.__heroState = nextState;
+    window.dispatchEvent(
+      new CustomEvent('codestars-hero-state-change', {
+        detail: { state: nextState, isPhaseA },
+      })
+    );
+  }, []);
+
+  // Snap to target state without animation on interrupt (anchor jump, page reload, scrollbar drag)
+  const snapToState = useCallback((targetState) => {
+    if (animCancelRef.current) {
+      animCancelRef.current();
+      animCancelRef.current = null;
+    }
+    isAnimatingRef.current = false;
+    window.__isHeroAnimating = false;
+
+    if (targetState === 'hero') {
+      heroMergeProgressRef.current = 0;
+      setHeroMergeProgress(0);
+      window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 0 } }));
+      setSectionAnimStyle(null);
+      updateHeroState('hero', false);
+      window.scrollTo(0, 0);
+    } else {
+      heroMergeProgressRef.current = 1;
+      setHeroMergeProgress(1);
+      window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 1 } }));
+      setSectionAnimStyle(null);
+      updateHeroState('merged', false);
+    }
+  }, [updateHeroState]);
+
+  // Cubic bezier easing helper
+  const cubicBezier = (t) => {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    return 1 - Math.pow(1 - t, 3.2);
+  };
+
+  // State-machine gated transitions
+  const animateHero = useCallback((targetProgress) => {
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (isReduced) {
+      if (isAnimatingRef.current) return;
+      isAnimatingRef.current = true;
+      window.__isHeroAnimating = true;
+
+      if (targetProgress === 0) {
+        // Reduced motion reverse: 150ms crossfade with gate
+        updateHeroState('toHero', true);
+        setSectionAnimStyle({ opacity: 0, transition: 'opacity 150ms ease' });
+        setTimeout(() => {
+          // Gate verified: section opacity is 0
+          window.scrollTo(0, 0);
+          heroMergeProgressRef.current = 0;
+          setHeroMergeProgress(0);
+          window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 0 } }));
+          updateHeroState('hero', false);
+          setSectionAnimStyle(null);
+          isAnimatingRef.current = false;
+          window.__isHeroAnimating = false;
+        }, 150);
+      } else {
+        // Reduced motion forward: 150ms crossfade
+        updateHeroState('toMerged', false);
+        heroMergeProgressRef.current = 1;
+        setHeroMergeProgress(1);
+        window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 1 } }));
+        setSectionAnimStyle({ opacity: 1, transition: 'opacity 150ms ease' });
+        setTimeout(() => {
+          updateHeroState('merged', false);
+          setSectionAnimStyle(null);
+          isAnimatingRef.current = false;
+          window.__isHeroAnimating = false;
+        }, 150);
+      }
+      return;
+    }
+
+    if (isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
+    window.__isHeroAnimating = true;
+
+    const isForward = targetProgress === 1;
+
+    if (isForward) {
+      // FORWARD TRANSITION (hero -> merged):
+      // Sections set visible BEFORE fade-in begins.
+      // 0 to 600ms: Wordmark shrinks/travels into navbar (progress 0 -> 1).
+      // Section content begins fade-in only when wordmark opacity is at or below 0.15 (~350ms).
+      // Mirror rule: Section content opacity <= 0.02 while wordmark > 0.15.
+      updateHeroState('toMerged', false);
+      const startTime = performance.now();
+      let rafId = null;
+
+      animCancelRef.current = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+      };
+
+      const stepForward = (now) => {
+        const elapsed = Math.max(0, now - startTime);
+
+        // 1. Hero wordmark: 0 - 600ms (0 -> 1)
+        const wordmarkT = Math.min(1, elapsed / 600);
+        const currentP = cubicBezier(wordmarkT);
+        heroMergeProgressRef.current = currentP;
+        setHeroMergeProgress(currentP);
+        window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: currentP } }));
+
+        // Wordmark reaches navbar landing and opacity drops below 0.15 by ~390ms.
+        // Before 400ms: Section content opacity MUST be <= 0.02 (strict mirror rule).
+        if (elapsed < 400) {
+          setSectionAnimStyle({ opacity: 0, transform: 'translate3d(0, 24px, 0)' });
+        } else {
+          const sectionT = Math.min(1, (elapsed - 400) / 500);
+          const easeSection = cubicBezier(sectionT);
+          const secOpacity = easeSection;
+          const secTranslateY = (1 - easeSection) * 24;
+          setSectionAnimStyle({
+            opacity: secOpacity,
+            transform: `translate3d(0, ${secTranslateY.toFixed(2)}px, 0)`,
+          });
+        }
+
+        if (elapsed < 900) {
+          rafId = requestAnimationFrame(stepForward);
+        } else {
+          // Final merged state
+          heroMergeProgressRef.current = 1;
+          setHeroMergeProgress(1);
+          window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 1 } }));
+          setSectionAnimStyle(null);
+          updateHeroState('merged', false);
+          isAnimatingRef.current = false;
+          window.__isHeroAnimating = false;
+          animCancelRef.current = null;
+        }
+      };
+
+      rafId = requestAnimationFrame(stepForward);
+    } else {
+      // REVERSE TRANSITION (merged -> hero):
+      // Strict Phase A -> Gate -> Phase B
+      updateHeroState('toHero', true);
+
+      // Phase A: Section out (0 to 350ms):
+      // Section fades to opacity 0 and moves down 16px.
+      // Wordmark, tagline, and decorations have opacity 0 and visibility hidden.
+      // Sections pointer-events none.
+      const phaseAStartTime = performance.now();
+      const phaseADuration = 350;
+      let rafIdA = null;
+
+      animCancelRef.current = () => {
+        if (rafIdA) cancelAnimationFrame(rafIdA);
+      };
+
+      const runPhaseA = () => {
+        return new Promise((resolve) => {
+          const stepPhaseA = (now) => {
+            const elapsed = Math.max(0, now - phaseAStartTime);
+            const t = Math.min(1, elapsed / phaseADuration);
+            const ease = cubicBezier(t);
+            const opacity = 1 - ease;
+            const translateY = ease * 16;
+
+            setSectionAnimStyle({
+              opacity,
+              transform: `translate3d(0, ${translateY.toFixed(2)}px, 0)`,
+              pointerEvents: 'none',
+            });
+
+            if (elapsed < phaseADuration) {
+              rafIdA = requestAnimationFrame(stepPhaseA);
+            } else {
+              // Ensure opacity is strictly 0 and translateY 16px
+              setSectionAnimStyle({
+                opacity: 0,
+                transform: 'translate3d(0, 16px, 0)',
+                pointerEvents: 'none',
+              });
+              resolve();
+            }
+          };
+          rafIdA = requestAnimationFrame(stepPhaseA);
+        });
+      };
+
+      runPhaseA().then(() => {
+        // GATE: Verify section content opacity is <= 0.02
+        const whatWeAreEl = document.querySelector('.what-we-are-content-wrap');
+        const computedSecOpacity = whatWeAreEl
+          ? parseFloat(window.getComputedStyle(whatWeAreEl).opacity || '0')
+          : 0;
+
+        if (computedSecOpacity > 0.02) {
+          // Hard gate guard: force 0 before Phase B starts
+          if (whatWeAreEl) whatWeAreEl.style.opacity = '0';
+        }
+
+        // Phase B: Hero in (350 to 950ms -> 600ms duration)
+        // Switch off isReversePhaseA so hero wordmark and viewport can render
+        setIsReversePhaseA(false);
+        window.dispatchEvent(
+          new CustomEvent('codestars-hero-state-change', {
+            detail: { state: 'toHero', isPhaseA: false },
+          })
+        );
+        window.scrollTo(0, 0);
+
+        const phaseBStartTime = performance.now();
+        const phaseBDuration = 600;
+        let rafIdB = null;
+
+        animCancelRef.current = () => {
+          if (rafIdB) cancelAnimationFrame(rafIdB);
+        };
+
+        const stepPhaseB = (now) => {
+          const elapsed = Math.max(0, now - phaseBStartTime);
+          const t = Math.min(1, elapsed / phaseBDuration);
+          const ease = cubicBezier(t);
+          const currentP = 1 - ease;
+
+          heroMergeProgressRef.current = currentP;
+          setHeroMergeProgress(currentP);
+          window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: currentP } }));
+
+          if (elapsed < phaseBDuration) {
+            rafIdB = requestAnimationFrame(stepPhaseB);
+          } else {
+            // Final hero state
+            heroMergeProgressRef.current = 0;
+            setHeroMergeProgress(0);
+            window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 0 } }));
+            setSectionAnimStyle(null);
+            window.scrollTo(0, 0);
+            updateHeroState('hero', false);
+            isAnimatingRef.current = false;
+            window.__isHeroAnimating = false;
+            animCancelRef.current = null;
+          }
+        };
+
+        rafIdB = requestAnimationFrame(stepPhaseB);
+      });
+    }
+  }, [cubicBezier, updateHeroState]);
+
+  // Listen to gestures on window for single-scroll trigger with input locking
+  useEffect(() => {
+    let touchStartY = null;
+
+    const handleWheel = (e) => {
+      if (isAnimatingRef.current) {
+        e.preventDefault();
+        return;
+      }
+
+      const currentY = window.scrollY;
+      const currentP = heroMergeProgressRef.current;
+
+      // Downward gesture while expanded at top
+      if (e.deltaY > 0 && currentY <= 15 && currentP < 0.5) {
+        e.preventDefault();
+        animateHero(1);
+      }
+      // Upward gesture while near top of document
+      else if (e.deltaY < 0 && currentY <= 25 && currentP > 0.5) {
+        e.preventDefault();
+        animateHero(0);
+      }
+    };
+
+    const handleTouchStart = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        touchStartY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (isAnimatingRef.current) {
+        e.preventDefault?.();
+        return;
+      }
+      if (touchStartY === null) return;
+      const currentTouchY = e.touches[0].clientY;
+      const deltaY = touchStartY - currentTouchY; // positive = swipe up / scroll down
+      const currentY = window.scrollY;
+      const currentP = heroMergeProgressRef.current;
+
+      if (deltaY >= 20 && currentY <= 15 && currentP < 0.5) {
+        touchStartY = null;
+        e.preventDefault?.();
+        animateHero(1);
+      } else if (deltaY <= -20 && currentY <= 25 && currentP > 0.5) {
+        touchStartY = null;
+        e.preventDefault?.();
+        animateHero(0);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (isAnimatingRef.current) {
+        if (['ArrowDown', 'PageDown', ' ', 'ArrowUp', 'PageUp', 'Home', 'End'].includes(e.key)) {
+          e.preventDefault();
+        }
+        return;
+      }
+
+      const currentY = window.scrollY;
+      const currentP = heroMergeProgressRef.current;
+
+      if (['ArrowDown', 'PageDown', ' '].includes(e.key) && currentY <= 15 && currentP < 0.5) {
+        e.preventDefault();
+        animateHero(1);
+      } else if (['ArrowUp', 'PageUp'].includes(e.key) && currentY <= 25 && currentP > 0.5) {
+        e.preventDefault();
+        animateHero(0);
+      }
+    };
+
+    // Scrollbar jump / direct scroll synchronization / interrupts
+    const handleScrollSync = () => {
+      const currentY = window.scrollY;
+      if (isAnimatingRef.current) {
+        // If user scrolls or jumps during an ongoing animation via scrollbar/wheel, snap to final
+        if (currentY > 40 && heroStateRef.current !== 'merged') {
+          snapToState('merged');
+        } else if (currentY === 0 && heroStateRef.current !== 'hero') {
+          snapToState('hero');
+        }
+        return;
+      }
+
+      if (currentY > 40 && heroMergeProgressRef.current < 1) {
+        snapToState('merged');
+      } else if (currentY === 0 && heroMergeProgressRef.current > 0) {
+        snapToState('hero');
+      }
+    };
+
+    // Listen to hash / popstate / beforeunload interrupts
+    const handleInterrupt = () => {
+      if (isAnimatingRef.current) {
+        const currentY = window.scrollY;
+        if (currentY > 40) {
+          snapToState('merged');
+        } else {
+          snapToState('hero');
+        }
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('scroll', handleScrollSync, { passive: true });
+    window.addEventListener('popstate', handleInterrupt);
+    window.addEventListener('hashchange', handleInterrupt);
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scroll', handleScrollSync);
+      window.removeEventListener('popstate', handleInterrupt);
+      window.removeEventListener('hashchange', handleInterrupt);
+    };
+  }, [animateHero, snapToState]);
+
+  // Track scroll position for secondary effects
   useEffect(() => {
     let frame;
     const onScroll = () => {
@@ -114,18 +505,15 @@ export default function Home({ onNavigate }) {
     };
   }, []);
 
-  // p = clamp(scrollY / (0.8 * window.innerHeight), 0, 1)
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
-  const p = Math.min(1, Math.max(0, scrollY / (0.8 * vh)));
+  // p is driven by heroMergeProgress (time-based tween on gesture, or scroll snap)
+  const p = heroMergeProgress;
 
-  // Hero Scroll Bug Fixes:
-  // a) Tagline and chevron: opacity = 1 - clamp(p / 0.25, 0, 1)
-  // pointer-events none once below 0.1
+  // Tagline and chevron: opacity = 1 - clamp(p / 0.25, 0, 1)
   const taglineChevronOpacity = Math.max(0, 1 - Math.min(1, p / 0.25));
-  const isTaglineInteractive = taglineChevronOpacity >= 0.1;
+  const isTaglineInteractive = taglineChevronOpacity >= 0.1 && heroState === 'hero';
 
-  // Hairline and starfield: fade out by p = 0.5 (opacity = 1 - clamp(p / 0.5, 0, 1))
-  const hairlineStarfieldOpacity = Math.max(0, 1 - Math.min(1, p / 0.5));
+  // Hairline and hero glow: fade out by p = 0.5
+  const hairlineGlowOpacity = Math.max(0, 1 - Math.min(1, p / 0.5));
 
   // Hero pointer hover logic: active only while p < 0.05, throttled with rAF
   useEffect(() => {
@@ -140,7 +528,6 @@ export default function Home({ onNavigate }) {
     let isHovering = false;
 
     const updateVars = () => {
-      // Lerp smooth follow (~0.08 per frame)
       const factor = isHovering ? 0.08 : 0.05;
       currentX += (targetX - currentX) * factor;
       currentY += (targetY - currentY) * factor;
@@ -151,7 +538,6 @@ export default function Home({ onNavigate }) {
       heroEl.style.setProperty('--hero-ptr-x', currentX.toFixed(4));
       heroEl.style.setProperty('--hero-ptr-y', currentY.toFixed(4));
 
-      // Spotlight coordinates for text gradient (in percentage)
       const spotlightX = (50 + currentX * 40).toFixed(2);
       const spotlightY = (50 + currentY * 40).toFixed(2);
       heroEl.style.setProperty('--hero-spotlight-x', `${spotlightX}%`);
@@ -169,18 +555,19 @@ export default function Home({ onNavigate }) {
     };
 
     const onPointerMove = (e) => {
-      // Disabled on touch devices, prefers-reduced-motion, or when scrolled (p >= 0.05)
       if (
         window.matchMedia('(pointer: coarse)').matches ||
         window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-        window.scrollY > 40
+        window.scrollY > 40 ||
+        heroMergeProgressRef.current > 0.05 ||
+        heroStateRef.current !== 'hero'
       ) {
         return;
       }
 
       const rect = heroEl.getBoundingClientRect();
-      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1; // -1 to 1
-      const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1; // -1 to 1
+      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
 
       targetX = Math.max(-1, Math.min(1, nx));
       targetY = Math.max(-1, Math.min(1, ny));
@@ -213,37 +600,40 @@ export default function Home({ onNavigate }) {
   }, []);
 
   const scrollToNext = () => {
-    document.getElementById('what-we-are')?.scrollIntoView({ behavior: 'smooth' });
+    animateHero(1);
   };
 
   return (
-    <div className="codestars-homepage-root">
+    <div
+      className={`codestars-homepage-root ${isReversePhaseA ? 'is-reverse-phase-a' : ''}`}
+      data-hero-state={heroState}
+    >
+      {/* Exactly ONE global fixed continuous Starfield across entire page */}
+      <Starfield />
+
       {/* ================= 1. HERO SECTION ================= */}
       <section
         id="hero"
         ref={heroSectionRef}
-        className="codestars-hero-viewport"
+        className={`codestars-hero-viewport ${heroState === 'merged' ? 'is-merged' : ''}`}
         aria-label="Hero"
+        style={{
+          opacity: heroState === 'merged' || isReversePhaseA ? 0 : Math.max(0, 1 - Math.min(1, p / 0.85)),
+          pointerEvents: heroState === 'merged' || p >= 0.85 ? 'none' : 'auto',
+          visibility: heroState === 'merged' || isReversePhaseA ? 'hidden' : 'visible',
+        }}
       >
-        {/* Background Navy Radial Glow & Starfield (fades in step 1, fades out by p = 0.5) */}
+        {/* Background Navy Radial Glow (fades in step 1, fades out by p = 0.5) */}
         <div
           className={`hero-navy-glow ${introState.bg ? 'is-revealed' : ''}`}
-          style={{ opacity: introState.bg ? hairlineStarfieldOpacity : 0 }}
+          style={{ opacity: introState.bg ? hairlineGlowOpacity : 0 }}
           aria-hidden="true"
         />
         <div
           className={`hero-horizon-glow ${introState.bg ? 'is-revealed' : ''}`}
-          style={{ opacity: introState.bg ? hairlineStarfieldOpacity : 0 }}
+          style={{ opacity: introState.bg ? hairlineGlowOpacity : 0 }}
           aria-hidden="true"
         />
-
-        <div
-          className={`hero-starfield-wrapper ${introState.bg ? 'is-revealed' : ''}`}
-          style={{ opacity: introState.bg ? hairlineStarfieldOpacity : 0 }}
-          aria-hidden="true"
-        >
-          <Starfield />
-        </div>
 
         {/* Semantic H1 for accessibility */}
         <h1 className="sr-only">DJS CodeStars — Community of builders and competitive programmers</h1>
@@ -266,7 +656,7 @@ export default function Home({ onNavigate }) {
         <div
           className={`hero-tagline-wrap ${introState.tagline ? 'is-revealed' : ''}`}
           style={{
-            opacity: introState.tagline ? taglineChevronOpacity : 0,
+            opacity: introState.tagline && !isReversePhaseA ? taglineChevronOpacity : 0,
             pointerEvents: isTaglineInteractive ? 'auto' : 'none',
           }}
         >
@@ -277,7 +667,7 @@ export default function Home({ onNavigate }) {
             Fades in step 5 (2.10-2.60s) and fades out by p = 0.5 on scroll */}
         <div
           className={`hero-bottom-hairline-wrap ${introState.chevron ? 'is-revealed' : ''}`}
-          style={{ opacity: introState.chevron ? hairlineStarfieldOpacity : 0 }}
+          style={{ opacity: introState.chevron && !isReversePhaseA ? hairlineGlowOpacity : 0 }}
           aria-hidden="true"
         >
           <div className="hero-bottom-hairline-line" />
@@ -290,7 +680,7 @@ export default function Home({ onNavigate }) {
         <div
           className={`hero-chevron-anchor ${introState.chevron ? 'is-revealed' : ''}`}
           style={{
-            opacity: introState.chevron ? taglineChevronOpacity : 0,
+            opacity: introState.chevron && !isReversePhaseA ? taglineChevronOpacity : 0,
             pointerEvents: isTaglineInteractive ? 'auto' : 'none',
           }}
         >
@@ -306,7 +696,9 @@ export default function Home({ onNavigate }) {
       </section>
 
       {/* ================= 2. WHAT WE ARE ================= */}
-      <WhatWeAre />
+      <WhatWeAre
+        contentStyle={sectionAnimStyle || undefined}
+      />
 
       {/* ================= 3. FEATURED EVENTS (3D COVERFLOW) ================= */}
       <FeaturedEvents onNavigate={onNavigate} />

@@ -3,8 +3,8 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   ArrowRight, Search, ExternalLink, Code2, Cpu, Globe,
-  BookOpen, Database, BrainCircuit, Layers, Terminal,
-  SlidersHorizontal, Smartphone, GraduationCap, ChevronRight,
+  Database, BrainCircuit, Layers, Terminal,
+  Smartphone, GraduationCap, ChevronRight,
 } from 'lucide-react';
 import codestarsLogo from '../assets/djs_codestarsLogo.jpeg';
 import Footer from '../components/Footer';
@@ -292,8 +292,6 @@ export default function Resources({ onNavigate }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const rootRef = useRef(null);
-  const heroTitleRef = useRef(null);
-  const controlsRef = useRef(null);
 
   const handleNavClick = (e, target) => {
     e.preventDefault();
@@ -307,13 +305,6 @@ export default function Resources({ onNavigate }) {
       gsap.to('.res-grid-layer', { backgroundPositionY: '30%', ease: 'none', scrollTrigger: { trigger: rootRef.current, start: 'top top', end: 'bottom bottom', scrub: 1 } });
       gsap.to('.res-orb-1', { scale: 1.15, opacity: 0.18, duration: 4, yoyo: true, repeat: -1, ease: 'sine.inOut' });
       gsap.to('.res-orb-2', { scale: 1.2, opacity: 0.12, duration: 5, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 1.2 });
-      if (heroTitleRef.current) {
-        const chars = heroTitleRef.current.querySelectorAll('.res-char');
-        gsap.fromTo(chars, { opacity: 0, y: 55, rotateX: -40 }, { opacity: 1, y: 0, rotateX: 0, duration: 0.65, stagger: 0.04, ease: 'power4.out', delay: 0.2 });
-      }
-      if (controlsRef.current) {
-        gsap.fromTo(controlsRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.7, ease: 'power3.out' });
-      }
     }, rootRef);
     return () => ctx.revert();
   }, []);
@@ -341,25 +332,15 @@ export default function Resources({ onNavigate }) {
         <div className="res-scanline" />
       </div>
 
-      <section className="res-hero">
-        <div className="res-hero-inner">
-          <span className="res-eyebrow-pill"><BookOpen size={11} strokeWidth={2.5} /> CURATED FOR CODESTARS</span>
-          <h1 className="res-hero-title" ref={heroTitleRef} aria-label="Learning Resources">
+      <header className="res-header">
+        <div className="res-header-inner">
+          <h1 className="res-hero-title" aria-label="Learning Resources">
             Learning Resources
           </h1>
           <p className="res-hero-sub">
             Discover free, high-quality resources to accelerate your learning journey
           </p>
-        </div>
-        <div className="res-ticker-wrap" aria-hidden="true">
-          <div className="res-ticker-track">
-            <span>{'LEETCODE . FREECODECAMP . FAST.AI . CODEFORCES . MDN WEB DOCS . KAGGLE . ODIN PROJECT . CS50 . REACT . TENSORFLOW . CSS-TRICKS . SQLBOLT . FLUTTER . '.repeat(6)}</span>
-          </div>
-        </div>
-      </section>
 
-      <section className="res-controls-section" ref={controlsRef} style={{ opacity: 0 }}>
-        <div className="res-controls-inner">
           <div className="res-search-wrap">
             <Search size={16} className="res-search-icon" strokeWidth={2} />
             <input
@@ -376,6 +357,7 @@ export default function Resources({ onNavigate }) {
               </button>
             )}
           </div>
+
           <div className="res-category-wrap" role="tablist" aria-label="Resource categories">
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
@@ -393,12 +375,13 @@ export default function Resources({ onNavigate }) {
               );
             })}
           </div>
-          <div className="res-count-bar">
-            <SlidersHorizontal size={13} strokeWidth={2.2} />
-            <span><strong>{filtered.length}</strong> resource{filtered.length !== 1 ? 's' : ''} found</span>
-          </div>
+
+          {/* Screen reader only live region for search/filter result announcements */}
+          <p className="sr-only" aria-live="polite">
+            {filtered.length} {filtered.length === 1 ? 'resource' : 'resources'} shown
+          </p>
         </div>
-      </section>
+      </header>
 
       <main className="res-main">
         <div className="res-grid-container">
