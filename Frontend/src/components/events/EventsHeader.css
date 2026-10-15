@@ -27,8 +27,8 @@
   transform: translate(-50%, -50%);
   background: radial-gradient(
     ellipse,
-    rgba(245, 185, 58, 0.12) 0%,
-    rgba(79, 140, 255, 0.05) 45%,
+    rgba(255, 166, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.6) 45%,
     transparent 70%
   );
   filter: blur(60px);
@@ -62,14 +62,14 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--text);
-  text-shadow: 0 0 24px var(--glow), 0 0 45px rgba(245, 185, 58, 0.22);
+  text-shadow: 0 0 24px var(--glow), 0 0 45px rgba(255, 166, 0, 0.25);
   line-height: 1.1;
   margin: 0;
 }
 
 .events-title-underline {
-  width: 64px;
-  height: 1.5px;
+  width: 68px;
+  height: 2px;
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -78,7 +78,7 @@
   );
   margin-top: 14px;
   border-radius: 9999px;
-  box-shadow: 0 0 8px rgba(245, 185, 58, 0.6);
+  box-shadow: 0 0 10px rgba(255, 166, 0, 0.7);
 }
 
 .events-display-subtitle {

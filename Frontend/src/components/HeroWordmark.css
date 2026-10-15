@@ -79,7 +79,7 @@
   -webkit-text-fill-color: transparent;
   line-height: 1;
   letter-spacing: 0.16em;
-  text-shadow: 0 0 16px rgba(245, 185, 58, 0.45);
+  text-shadow: 0 0 16px rgba(255, 166, 0, 0.5);
   margin-bottom: 6px;
   transition: text-shadow 0.3s ease;
 }
@@ -90,7 +90,7 @@
   color: var(--gold);
   background: radial-gradient(
     circle at var(--hero-spotlight-x, 50%) var(--hero-spotlight-y, 50%),
-    #FFD36B 0%,
+    #FFB834 0%,
     var(--gold) 60%
   );
   -webkit-background-clip: text;
@@ -101,22 +101,22 @@
   display: flex;
   justify-content: center;
   text-shadow:
-    0 0 24px rgba(245, 185, 58, 0.45),
-    0 0 50px rgba(245, 185, 58, 0.2);
+    0 0 24px rgba(255, 166, 0, 0.5),
+    0 0 50px rgba(255, 166, 0, 0.25);
   transition: text-shadow 0.3s ease;
 }
 
 /* Intensify glow slightly while hovering hero section */
 .is-hero-hovered ~ .hero-wordmark-fixed-layer .solid-djs-line,
 body.is-hero-hovered .solid-djs-line {
-  text-shadow: 0 0 22px rgba(245, 185, 58, 0.7), 0 0 35px rgba(255, 211, 107, 0.4);
+  text-shadow: 0 0 22px rgba(255, 166, 0, 0.7), 0 0 35px rgba(255, 184, 52, 0.4);
 }
 
 .is-hero-hovered ~ .hero-wordmark-fixed-layer .solid-codestars-line,
 body.is-hero-hovered .solid-codestars-line {
   text-shadow:
-    0 0 30px rgba(245, 185, 58, 0.65),
-    0 0 65px rgba(245, 185, 58, 0.35);
+    0 0 30px rgba(255, 166, 0, 0.65),
+    0 0 65px rgba(255, 166, 0, 0.35);
 }
 
 /* Prefers Reduced Motion: simple 400ms opacity fade, no blur or drift */

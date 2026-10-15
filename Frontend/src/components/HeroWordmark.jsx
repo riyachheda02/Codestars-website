@@ -265,7 +265,7 @@ export default function HeroWordmark({
   }
 
   // Measure navbar slot landing coordinates
-  const logoTargetWidth = 145;
+  const logoTargetWidth = 98;
   let logoTargetX;
   let logoTargetY = 14;
 
