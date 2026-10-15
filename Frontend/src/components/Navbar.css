@@ -51,16 +51,16 @@
 
 .codestars-navbar-pill.is-scrolled {
   top: 0;
-  background: rgba(7, 10, 18, 0.9);
-  border-bottom: 1px solid rgba(245, 185, 58, 0.18);
+  background: rgba(0, 0, 0, 0.92);
+  border-bottom: 1px solid rgba(255, 166, 0, 0.2);
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 8px 24px rgba(0, 0, 0, 0.6),
     inset 0 1px 1px rgba(255, 255, 255, 0.06);
 }
 
 .codestars-navbar-pill.is-inner-page {
-  background: rgba(7, 10, 18, 0.84);
-  border-bottom: 1px solid rgba(245, 185, 58, 0.18);
+  background: rgba(0, 0, 0, 0.88);
+  border-bottom: 1px solid rgba(255, 166, 0, 0.2);
 }
 
 /* Glass filter layers */
@@ -82,7 +82,7 @@
     170deg,
     rgba(255, 255, 255, 0.08) 0%,
     rgba(255, 255, 255, 0.01) 40%,
-    rgba(245, 185, 58, 0.05) 100%
+    rgba(255, 166, 0, 0.05) 100%
   );
   pointer-events: none;
   z-index: 1;
@@ -111,7 +111,7 @@
 /* =========================================================
    LOGO SLOT: EXPANDS DYNAMICALLY
    At rest on Home page: width is 0px, overflow is hidden
-   On scroll: animates/expands from 0 to 145px
+   On scroll: animates/expands from 0 to 98px
    ========================================================= */
 
 .navbar-logo-slot-expanding {
@@ -124,16 +124,16 @@
   flex-shrink: 0;
   transition: width 0.08s linear, opacity 0.2s ease;
   position: relative;
-  /* Always reserve at least 8px so gap doesn't over-collapse */
   min-width: 0;
 }
 
 .navbar-docked-logo {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   text-decoration: none;
-  width: 145px;
+  width: 98px;
   padding-left: 0;
   pointer-events: none;
   cursor: pointer;
@@ -148,7 +148,8 @@
   color: var(--gold);
   line-height: 1;
   margin-bottom: 2px;
-  text-shadow: 0 0 10px rgba(245, 185, 58, 0.45);
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255, 166, 0, 0.45);
 }
 
 .navbar-logo-codestars {
@@ -158,13 +159,14 @@
   color: var(--gold);
   letter-spacing: -0.02em;
   line-height: 1;
-  text-shadow: 0 0 14px rgba(245, 185, 58, 0.45);
+  text-align: center;
+  text-shadow: 0 0 14px rgba(255, 166, 0, 0.45);
   transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
 .navbar-docked-logo:hover .navbar-logo-codestars {
   color: var(--gold-bright);
-  text-shadow: 0 0 16px rgba(255, 211, 107, 0.8);
+  text-shadow: 0 0 16px rgba(255, 184, 52, 0.8);
 }
 
 /* =========================================================
