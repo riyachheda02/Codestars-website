@@ -32,7 +32,6 @@ function getRouteFromLocation() {
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(getRouteFromLocation);
-  const [selectedYear, setSelectedYear] = useState('2026');
 
   const navigateTo = useCallback((route) => {
     const r = (route || '').toLowerCase();
@@ -135,8 +134,6 @@ function App() {
         {currentRoute === 'home' && (
           <Home
             onNavigate={navigateTo}
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
           />
         )}
       </main>

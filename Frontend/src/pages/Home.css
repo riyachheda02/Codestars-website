@@ -128,6 +128,67 @@
   visibility: hidden !important;
 }
 
+.hero-photo-trail {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.hero-photo-card {
+  position: absolute;
+  width: 240px;
+  height: 162px;
+  overflow: hidden;
+  background: #10131a;
+  border-radius: 0;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%) scale(0.96);
+  opacity: 0;
+  animation: hero-photo-arrive 180ms ease-out forwards;
+  transition: opacity 500ms ease, transform 500ms ease;
+  will-change: transform, opacity;
+}
+
+.hero-photo-card.is-fading {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.94);
+}
+
+.hero-photo-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@keyframes hero-photo-arrive {
+  to {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.hero-year-switcher {
+  display: none;
+}
+
+.hero-year-label {
+  display: none;
+}
+
+.hero-year-button {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .hero-photo-card {
+    width: 175px;
+    height: 118px;
+  }
+}
+
 /* In hero state, all document sections below hero are non-visible and non-interactive */
 .codestars-homepage-root[data-hero-state="hero"] .home-section:not(#hero) {
   visibility: hidden !important;

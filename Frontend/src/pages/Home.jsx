@@ -6,10 +6,12 @@ import WhatWeAre from '../components/home/WhatWeAre';
 import FeaturedEvents from '../components/home/FeaturedEvents';
 import Announcements from '../components/home/Announcements';
 import Footer from '../components/Footer';
+import heroPhotos from '../constant/photos';
 import './Home.css';
 
 export default function Home({ onNavigate }) {
   const [scrollY, setScrollY] = useState(0);
+  const [activePhotoCards, setActivePhotoCards] = useState([]);
   const [introState, setIntroState] = useState(() => {
     if (typeof window === 'undefined') {
       return { bg: true, tagline: true, navbar: true, chevron: true, isDone: true };
@@ -19,6 +21,93 @@ export default function Home({ onNavigate }) {
   });
 
   const heroSectionRef = useRef(null);
+  const photoIndexRef = useRef(0);
+  const lastPhotoPointerRef = useRef({ x: 0, y: 0 });
+  const photoTimersRef = useRef(new Set());
+  const inactivityTimerRef = useRef(null);
+
+  const schedulePhotoTimer = useCallback((callback, delay) => {
+    const timer = window.setTimeout(() => {
+      photoTimersRef.current.delete(timer);
+      callback();
+    }, delay);
+    photoTimersRef.current.add(timer);
+    return timer;
+  }, []);
+
+  const clearPhotoTimers = useCallback(() => {
+    photoTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    photoTimersRef.current.clear();
+    inactivityTimerRef.current = null;
+  }, []);
+
+  const resetPhotoInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      window.clearTimeout(inactivityTimerRef.current);
+      photoTimersRef.current.delete(inactivityTimerRef.current);
+    }
+
+    inactivityTimerRef.current = schedulePhotoTimer(() => {
+      inactivityTimerRef.current = null;
+      setActivePhotoCards((cards) => cards.map((card) => ({ ...card, fading: true })));
+      schedulePhotoTimer(() => setActivePhotoCards([]), 700);
+    }, 7000);
+  }, [schedulePhotoTimer]);
+
+  const spawnHeroPhoto = useCallback((x, y) => {
+    const photoPool = heroPhotos;
+    if (!photoPool.length) return;
+
+    const photo = photoPool[photoIndexRef.current % photoPool.length];
+    photoIndexRef.current += 1;
+    const id = `${Date.now()}-${photoIndexRef.current}`;
+
+    setActivePhotoCards((cards) => [
+      ...cards,
+      { id, url: photo.url, x, y, fading: false },
+    ].slice(-4));
+
+    schedulePhotoTimer(() => {
+      setActivePhotoCards((cards) => cards.map((card) => (
+        card.id === id ? { ...card, fading: true } : card
+      )));
+    }, 1800);
+    schedulePhotoTimer(() => {
+      setActivePhotoCards((cards) => cards.filter((card) => card.id !== id));
+    }, 2600);
+    resetPhotoInactivityTimer();
+  }, [resetPhotoInactivityTimer, schedulePhotoTimer]);
+
+  const handleHeroPhotoPointer = (event) => {
+    if (
+      !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      heroState !== 'hero' ||
+      heroMergeProgressRef.current > 0.05
+    ) return;
+
+    const rect = heroSectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const previous = lastPhotoPointerRef.current;
+
+    if (previous.x === 0 && previous.y === 0 || Math.hypot(x - previous.x, y - previous.y) > 30) {
+      lastPhotoPointerRef.current = { x, y };
+      spawnHeroPhoto(x, y);
+    } else {
+      resetPhotoInactivityTimer();
+    }
+  };
+
+  const handleHeroPhotoLeave = () => {
+    lastPhotoPointerRef.current = { x: 0, y: 0 };
+    resetPhotoInactivityTimer();
+  };
+
+
+
+  useEffect(() => () => clearPhotoTimers(), [clearPhotoTimers]);
 
   // Cinematic Intro: 2.6s total sequence
   // 1. 0.00 - 0.90s: background fades in (navy radial glow and starfield opacity 0 -> 1)
@@ -109,6 +198,12 @@ export default function Home({ onNavigate }) {
   const animCancelRef = useRef(null);
   const [sectionAnimStyle, setSectionAnimStyle] = useState(null);
   const [isReversePhaseA, setIsReversePhaseA] = useState(false);
+
+  useEffect(() => {
+    if (heroState === 'hero' && heroMergeProgress <= 0.05) return;
+    clearPhotoTimers();
+    setActivePhotoCards((cards) => cards.length ? [] : cards);
+  }, [clearPhotoTimers, heroMergeProgress, heroState]);
 
   const updateHeroState = useCallback((nextState, isPhaseA = false) => {
     heroStateRef.current = nextState;
@@ -617,12 +712,30 @@ export default function Home({ onNavigate }) {
         ref={heroSectionRef}
         className={`codestars-hero-viewport ${heroState === 'merged' ? 'is-merged' : ''}`}
         aria-label="Hero"
+        onPointerEnter={handleHeroPhotoPointer}
+        onPointerMove={handleHeroPhotoPointer}
+        onPointerLeave={handleHeroPhotoLeave}
         style={{
           opacity: heroState === 'merged' || isReversePhaseA ? 0 : Math.max(0, 1 - Math.min(1, p / 0.85)),
           pointerEvents: heroState === 'merged' || p >= 0.85 ? 'none' : 'auto',
           visibility: heroState === 'merged' || isReversePhaseA ? 'hidden' : 'visible',
         }}
       >
+        <div className="hero-photo-trail" aria-hidden="true">
+          {activePhotoCards.map((card) => (
+            <div
+              key={card.id}
+              className={`hero-photo-card ${card.fading ? 'is-fading' : ''}`}
+              style={{
+                left: `${card.x}px`,
+                top: `${card.y}px`,
+              }}
+            >
+              <img src={card.url} alt="" draggable="false" />
+            </div>
+          ))}
+        </div>
+
         {/* Background Navy Radial Glow (fades in step 1, fades out by p = 0.5) */}
         <div
           className={`hero-navy-glow ${introState.bg ? 'is-revealed' : ''}`}

@@ -47,13 +47,8 @@ export default function Footer({ onNavigate }) {
 
   return (
     <footer className="codestars-footer" id="contact" aria-label="Site Footer">
-      {/* Diagonal cut top edge with bright gold hairline */}
-      <div className="footer-diagonal-cut" aria-hidden="true">
-        <div className="footer-cut-hairline" />
-      </div>
-
       <div className="footer-content-wrap">
-        <div className="footer-grid">
+        <div className="footer-top-row">
           {/* Brand Left Column */}
           <div className="footer-brand-col">
             <div className="footer-brand-lockup">
@@ -73,121 +68,123 @@ export default function Footer({ onNavigate }) {
             <p className="footer-brand-desc">{footerData.mission}</p>
           </div>
 
-          {/* Col 1: Navigation */}
-          <div className="footer-links-col">
-            <h4 className="footer-heading">Navigation</h4>
-            <ul className="footer-nav-menu">
-              <li>
-                <a href="#home" onClick={(e) => handleNavClick(e, 'home')}>
-                  Home
-                </a>
-              </li>
-              <li>
-                <a href="#events" onClick={(e) => handleNavClick(e, 'events')}>
-                  Events
-                </a>
-              </li>
-              <li>
-                <a href="#resources" onClick={(e) => handleNavClick(e, 'resources')}>
-                  Resources
-                </a>
-              </li>
-              <li>
-                <a href="#team" onClick={(e) => handleNavClick(e, 'team')}>
-                  Team
-                </a>
-              </li>
-              <li>
-                <a href="#gallery" onClick={(e) => handleNavClick(e, 'gallery')}>
-                  Gallery Archive
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://codeuncode.djscodestars.in/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="footer-external-link"
-                >
-                  Code UnCode ↗
-                </a>
-              </li>
-            </ul>
-          </div>
+          <div className="footer-links-grid">
+            {/* Col 1: Navigation */}
+            <div className="footer-links-col">
+              <h4 className="footer-heading">Navigation</h4>
+              <ul className="footer-nav-menu">
+                <li>
+                  <a href="#home" onClick={(e) => handleNavClick(e, 'home')}>
+                    Home
+                  </a>
+                </li>
+                <li>
+                  <a href="#events" onClick={(e) => handleNavClick(e, 'events')}>
+                    Events
+                  </a>
+                </li>
+                <li>
+                  <a href="#resources" onClick={(e) => handleNavClick(e, 'resources')}>
+                    Resources
+                  </a>
+                </li>
+                <li>
+                  <a href="#team" onClick={(e) => handleNavClick(e, 'team')}>
+                    Team
+                  </a>
+                </li>
+                <li>
+                  <a href="#gallery" onClick={(e) => handleNavClick(e, 'gallery')}>
+                    Gallery Archive
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://codeuncode.djscodestars.in/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="footer-external-link"
+                  >
+                    Code UnCode ↗
+                  </a>
+                </li>
+              </ul>
+            </div>
 
-          {/* Col 2: Connectors (Social Links) */}
-          <div className="footer-links-col">
-            <h4 className="footer-heading">Connectors</h4>
-            <ul className="footer-social-menu">
-              <li>
-                <a
-                  href="https://www.instagram.com/djsce_codestars/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="footer-social-item"
-                >
-                  <InstagramIcon />
-                  <span>Instagram</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.linkedin.com/company/djs-codestars/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="footer-social-item"
-                >
-                  <LinkedinIcon />
-                  <span>LinkedIn</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://discord.com/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="footer-social-item"
-                >
-                  <DiscordSvg />
-                  <span>Discord</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.youtube.com/@djscodestars"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="footer-social-item"
-                >
-                  <YoutubeIcon />
-                  <span>YouTube</span>
-                </a>
-              </li>
-            </ul>
-          </div>
+            {/* Col 2: Connectors (Social Links) */}
+            <div className="footer-links-col">
+              <h4 className="footer-heading">Connectors</h4>
+              <ul className="footer-social-menu">
+                <li>
+                  <a
+                    href="https://www.instagram.com/djsce_codestars/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="footer-social-item"
+                  >
+                    <InstagramIcon />
+                    <span>Instagram</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.linkedin.com/company/djs-codestars/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="footer-social-item"
+                  >
+                    <LinkedinIcon />
+                    <span>LinkedIn</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://discord.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="footer-social-item"
+                  >
+                    <DiscordSvg />
+                    <span>Discord</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.youtube.com/@djscodestars"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="footer-social-item"
+                  >
+                    <YoutubeIcon />
+                    <span>YouTube</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
 
-          {/* Col 3: Contact */}
-          <div className="footer-links-col footer-contact-col">
-            <h4 className="footer-heading">Contact</h4>
-            <div className="footer-contact-details">
-              <div className="footer-contact-row">
-                <Phone size={20} className="footer-contact-icon" />
-                <div className="footer-contact-phones">
-                  <a href="tel:+918928527980">+91 89285 27980</a>
-                  <a href="tel:+919321600186">+91 93216 00186</a>
+            {/* Col 3: Contact */}
+            <div className="footer-links-col footer-contact-col">
+              <h4 className="footer-heading">Contact</h4>
+              <div className="footer-contact-details">
+                <div className="footer-contact-row">
+                  <Phone size={20} className="footer-contact-icon" />
+                  <div className="footer-contact-phones">
+                    <a href="tel:+918928527980">+91 89285 27980</a>
+                    <a href="tel:+919321600186">+91 93216 00186</a>
+                  </div>
                 </div>
-              </div>
 
-              <div className="footer-contact-row">
-                <Mail size={20} className="footer-contact-icon" />
-                <a href="mailto:djscodestars@gmail.com">djscodestars@gmail.com</a>
-              </div>
+                <div className="footer-contact-row">
+                  <Mail size={20} className="footer-contact-icon" />
+                  <a href="mailto:djscodestars@gmail.com">djscodestars@gmail.com</a>
+                </div>
 
-              <div className="footer-contact-row">
-                <MapPin size={20} className="footer-contact-icon" />
-                <span className="footer-address-text">
-                  DJ Sanghvi College of Engineering, Vile Parle (West), Mumbai - 400056
-                </span>
+                <div className="footer-contact-row">
+                  <MapPin size={20} className="footer-contact-icon" />
+                  <span className="footer-address-text">
+                    DJ Sanghvi College of Engineering, Vile Parle (West), Mumbai - 400056
+                  </span>
+                </div>
               </div>
             </div>
           </div>

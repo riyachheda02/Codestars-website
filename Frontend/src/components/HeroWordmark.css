@@ -3,7 +3,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 990;
+  z-index: 10002;
   pointer-events: none;
   will-change: transform, opacity;
   perspective: 1000px;

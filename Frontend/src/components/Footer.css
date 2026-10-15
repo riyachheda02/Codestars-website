@@ -4,46 +4,45 @@
 
 .codestars-footer {
   position: relative;
-  background: linear-gradient(180deg, #F7C65A 0%, #EBAA2C 55%, #C98A12 100%);
+  background: #ffa600;
   color: #0B1020;
   overflow: hidden;
   z-index: 10;
-  padding-top: 36px;
-}
-
-/* Diagonal cut top edge revealing gold */
-.footer-diagonal-cut {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 50px;
-  pointer-events: none;
-}
-
-.footer-cut-hairline {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, #FFD36B, #FFF5D6, #FFD36B);
-  box-shadow: 0 0 10px rgba(255, 211, 107, 0.8);
 }
 
 .footer-content-wrap {
-  max-width: 1320px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 80px 28px 44px;
+  padding: 0 48px 28px;
   position: relative;
   z-index: 2;
 }
 
-.footer-grid {
+.footer-top-row {
   display: grid;
-  grid-template-columns: 1.35fr 0.8fr 0.9fr 1.45fr;
+  grid-template-columns: minmax(260px, 1.15fr) minmax(0, 1.85fr);
+  align-items: start;
   gap: 48px;
-  margin-bottom: 56px;
+  padding: 56px 0 42px;
+  border-bottom: 2px solid rgba(11, 16, 32, 0.15);
+}
+
+.footer-brand-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.footer-links-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr;
+  gap: 28px;
+}
+
+.footer-links-col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Brand Column */
@@ -324,28 +323,36 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .footer-grid {
-    grid-template-columns: 1.2fr 0.9fr 0.9fr 1.2fr;
-    gap: 40px;
+  .footer-content-wrap {
+    padding-inline: 28px;
+  }
+
+  .footer-top-row {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 42px 0 34px;
+  }
+
+  .footer-links-grid {
+    gap: 24px;
   }
 }
 
 @media (max-width: 768px) {
-  .codestars-footer {
-    padding-top: 20px;
-  }
-
   .footer-content-wrap {
-    padding: 36px 16px calc(72px + env(safe-area-inset-bottom, 0px)) 16px;
+    padding: 0 16px calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
-  .footer-grid {
+  .footer-top-row {
+    gap: 22px;
+    padding: 30px 0 24px;
+  }
+
+  .footer-links-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 16px;
-    margin-bottom: 20px;
+    gap: 22px 18px;
   }
 
-  .footer-brand-col,
   .footer-contact-col {
     grid-column: 1 / -1;
   }

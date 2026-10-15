@@ -28,6 +28,7 @@ export default function HeroWordmark({
 
   // Hero State tracking ('hero', 'toMerged', 'merged', 'toHero')
   const [heroState, setHeroState] = useState(() => {
+    if (currentRoute !== 'home') return 'merged';
     if (typeof document !== 'undefined') {
       const root = document.querySelector('.codestars-homepage-root');
       return root?.getAttribute('data-hero-state') || 'hero';
@@ -35,6 +36,12 @@ export default function HeroWordmark({
     return 'hero';
   });
   const [isReversePhaseA, setIsReversePhaseA] = useState(false);
+
+  // Track the live logo slot rect broadcast from Navbar
+  const [logoSlotRect, setLogoSlotRect] = useState(null);
+
+  // Progress state: driven by codestars-hero-progress or scroll fallback
+  const [heroProgress, setHeroProgress] = useState(0);
 
   useEffect(() => {
     if (previewMode) return;
@@ -46,9 +53,32 @@ export default function HeroWordmark({
       }
     };
 
+    const handleLogoSlotUpdate = (e) => {
+      if (e.detail) setLogoSlotRect(e.detail);
+    };
+
     window.addEventListener('codestars-hero-state-change', handleHeroStateChange);
-    return () => window.removeEventListener('codestars-hero-state-change', handleHeroStateChange);
+    window.addEventListener('codestars-logo-slot-update', handleLogoSlotUpdate);
+    return () => {
+      window.removeEventListener('codestars-hero-state-change', handleHeroStateChange);
+      window.removeEventListener('codestars-logo-slot-update', handleLogoSlotUpdate);
+    };
   }, [previewMode]);
+
+  // When navigating back to home, reset heroState
+  useEffect(() => {
+    if (currentRoute === 'home') {
+      const scrollY = window.scrollY;
+      if (scrollY <= 40) {
+        setHeroState('hero');
+        setHeroProgress(0);
+      } else {
+        setHeroState('merged');
+        setHeroProgress(1);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRoute]);
 
   const scrollYRef = useRef(0);
 
@@ -157,9 +187,6 @@ export default function HeroWordmark({
     };
   }, [measureAnchor, previewMode, customFont]);
 
-  // Progress state: driven by codestars-hero-progress or scroll fallback
-  const [heroProgress, setHeroProgress] = useState(0);
-
   // Listen to codestars-hero-progress event
   useEffect(() => {
     if (previewMode) return;
@@ -238,24 +265,28 @@ export default function HeroWordmark({
   }
 
   // Measure navbar slot landing coordinates
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 780;
   const logoTargetWidth = 145;
-
   let logoTargetX;
-  let logoTargetY = 14 + 6;
+  let logoTargetY = 14;
 
-  if (isMobile) {
-    logoTargetX = Math.round((window.innerWidth - logoTargetWidth) / 2);
-    logoTargetY = 14;
+  if (logoSlotRect) {
+    // Use the live slot rect broadcast from Navbar for pixel-perfect landing
+    logoTargetX = logoSlotRect.x;
+    logoTargetY = logoSlotRect.y;
   } else {
-    const navPill = document.querySelector('.codestars-navbar-pill');
-    if (navPill) {
-      const navRect = navPill.getBoundingClientRect();
-      logoTargetX = navRect.left + 14;
-      logoTargetY = navRect.top + 6;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 780;
+    if (isMobile) {
+      logoTargetX = Math.round((window.innerWidth - logoTargetWidth) / 2);
+      const navRect = document.querySelector('.codestars-navbar-pill')?.getBoundingClientRect();
+      logoTargetY = navRect ? navRect.top + (navRect.height - 44) / 2 : 10;
     } else {
-      const estimatedPillWidth = 460;
-      logoTargetX = (window.innerWidth - estimatedPillWidth) / 2 + 14;
+      // Fallback: center of viewport
+      logoTargetX = Math.round((window.innerWidth - logoTargetWidth) / 2);
+      const navPill = document.querySelector('.codestars-navbar-pill');
+      if (navPill) {
+        const navRect = navPill.getBoundingClientRect();
+        logoTargetY = navRect.top + (navRect.height - 44) / 2;
+      }
     }
   }
 
@@ -269,7 +300,7 @@ export default function HeroWordmark({
   const currentScale = previewMode ? 1 : 1 - (1 - targetScale) * easedTravelP;
 
   // Font metrics for the solid text
-  const codeStarsFontSize = Math.min(92, Math.max(42, anchorRect.width * 0.165));
+  const codeStarsFontSize = Math.min(112, Math.max(50, anchorRect.width * 0.195));
   const djsFontSize = Math.round(codeStarsFontSize * 0.38);
 
   const isWordmarkHidden = computedLayerOpacity <= 0.001;

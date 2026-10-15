@@ -1,21 +1,21 @@
 :root {
-  /* Midnight and Gold theme palette */
-  --bg: #070A12;
-  --bg-2: #0C1220;
-  --bg-3: #121B30;
-  --surface: rgba(18, 27, 48, 0.62);
-  --border: rgba(245, 185, 58, 0.16);
-  --gold: #F5B93A;
-  --gold-bright: #FFD36B;
-  --gold-deep: #C98A12;
-  --glow: rgba(245, 185, 58, 0.14);
-  --blue: #4F8CFF;
-  --text: #F2F4F8;
-  --muted: #9AA4B8;
+  /* Black and Yellowish-Orange theme palette */
+  --bg: #000000;
+  --bg-2: #080808;
+  --bg-3: #121212;
+  --surface: rgba(18, 18, 18, 0.75);
+  --border: rgba(255, 166, 0, 0.18);
+  --gold: #FFA600;
+  --gold-bright: #FFB834;
+  --gold-deep: #D48200;
+  --glow: rgba(255, 166, 0, 0.18);
+  --blue: #FFA600;
+  --text: #FFFFFF;
+  --muted: #A3A3A3;
 
-  /* Featured Events golden glow layers */
-  --events-glow-1: radial-gradient(ellipse 75% 60% at 50% 55%, rgba(247, 198, 90, 0.34) 0%, rgba(245, 185, 58, 0.16) 38%, rgba(245, 185, 58, 0.05) 62%, transparent 78%);
-  --events-glow-2: radial-gradient(ellipse 90% 40% at 50% 100%, rgba(245, 185, 58, 0.18), transparent 70%);
+  /* Featured Events warm golden-orange glow layers */
+  --events-glow-1: radial-gradient(ellipse 75% 60% at 50% 55%, rgba(255, 166, 0, 0.28) 0%, rgba(255, 166, 0, 0.12) 38%, rgba(255, 166, 0, 0.03) 62%, transparent 78%);
+  --events-glow-2: radial-gradient(ellipse 90% 40% at 50% 100%, rgba(255, 166, 0, 0.15), transparent 70%);
 
   /* Typography */
   --font-hero: 'Orbitron', 'Eurostile', 'Segoe UI', sans-serif;
@@ -29,11 +29,11 @@
   --bg-card: var(--surface);
   --text-primary: var(--text);
   --text-secondary: var(--muted);
-  --text-muted: #7A859E;
+  --text-muted: #7A7A7A;
   --accent-orange: var(--gold);
   --accent-orange-glow: var(--glow);
   --border-subtle: var(--border);
-  --border-hover: rgba(245, 185, 58, 0.35);
+  --border-hover: rgba(255, 166, 0, 0.35);
 
   --font-main: var(--font-body);
   --font-display: var(--font-serif);
@@ -62,12 +62,12 @@ h1 {
 }
 
 .page-title-underline {
-  width: 64px;
-  height: 1.5px;
+  width: 68px;
+  height: 2px;
   margin: 14px auto 0;
   border-radius: 9999px;
   background: linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
-  box-shadow: 0 0 8px rgba(245, 185, 58, 0.6);
+  box-shadow: 0 0 10px rgba(255, 166, 0, 0.7);
 }
 
 .sr-only {

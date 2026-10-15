@@ -196,6 +196,30 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
     }
   };
 
+  const renderNavbarItems = (items) => items.map((item) => {
+    const Icon = item.icon;
+    const isActive = !item.isExternal && currentRoute === item.route;
+
+    return (
+      <div key={item.id} className="navbar-item-wrapper">
+        <a
+          href={item.isExternal ? item.url : item.hash}
+          target={item.isExternal ? '_blank' : undefined}
+          rel={item.isExternal ? 'noopener noreferrer' : undefined}
+          className={`navbar-nav-btn ${isActive ? 'is-active' : ''}`}
+          onClick={(event) => handleItemClick(event, item)}
+          aria-current={isActive ? 'page' : undefined}
+        >
+          <div className="navbar-icon-box">
+            {isActive && <span className="navbar-active-glow-pill" aria-hidden="true" />}
+            <Icon size={19} className="navbar-icon" />
+          </div>
+          <span className="navbar-item-label">{item.label}</span>
+        </a>
+      </div>
+    );
+  });
+
   const handleLogoClick = (e) => {
     e.preventDefault();
     if (onNavigate) {
@@ -207,8 +231,9 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
   };
 
   const isInner = currentRoute !== 'home';
+  const targetSlotWidth = 98;
   const slotProgress = isInner ? 1 : Math.min(1, Math.max(0, rawPVal / 0.88));
-  const logoSlotWidth = isInner ? 145 : Math.round(slotProgress * 145);
+  const logoSlotWidth = isInner ? targetSlotWidth : Math.round(slotProgress * targetSlotWidth);
 
   let t = 0;
   if (isInner) {
@@ -234,8 +259,14 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
         <div className="navbar-pill-glass-overlay" aria-hidden="true" />
         <div className="navbar-pill-glass-specular" aria-hidden="true" />
 
-        <div className="navbar-pill-inner">
-          {/* Logo slot that expands smoothly from width 0 to 145px */}
+        <div
+          className="navbar-pill-inner"
+          style={{ '--nav-logo-slot-width': `${logoSlotWidth}px` }}
+        >
+          <nav className="navbar-items-group navbar-items-group-left" aria-label="Primary navigation">
+            {renderNavbarItems(NAV_ITEMS.slice(0, 3))}
+          </nav>
+
           <div
             ref={logoSlotRef}
             className="navbar-logo-slot-expanding"
@@ -260,31 +291,8 @@ export default function Navbar({ currentRoute = 'home', onNavigate }) {
             </a>
           </div>
 
-          {/* Navigation Items */}
-          <nav className="navbar-items-group" aria-label="Desktop menu">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = !item.isExternal && currentRoute === item.route;
-
-              return (
-                <div key={item.id} className="navbar-item-wrapper">
-                  <a
-                    href={item.isExternal ? item.url : item.hash}
-                    target={item.isExternal ? '_blank' : undefined}
-                    rel={item.isExternal ? 'noopener noreferrer' : undefined}
-                    className={`navbar-nav-btn ${isActive ? 'is-active' : ''}`}
-                    onClick={(e) => handleItemClick(e, item)}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <div className="navbar-icon-box">
-                      {isActive && <span className="navbar-active-glow-pill" aria-hidden="true" />}
-                      <Icon size={19} className="navbar-icon" />
-                    </div>
-                    <span className="navbar-item-label">{item.label}</span>
-                  </a>
-                </div>
-              );
-            })}
+          <nav className="navbar-items-group navbar-items-group-right" aria-label="Secondary navigation">
+            {renderNavbarItems(NAV_ITEMS.slice(3))}
           </nav>
         </div>
       </header>
