@@ -1,17 +1,20 @@
-import React, { lazy, Suspense, useState, useEffect, useCallback } from 'react';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
-import ParticleField from './components/ParticleField';
+import HeroWordmark from './components/HeroWordmark';
 import Home from './pages/Home';
+import Events from './pages/Events';
+import Team from './pages/Team';
+import Resources from './pages/Resources';
+import Gallery from './pages/Gallery';
+import FontTest from './pages/FontTest';
 import './App.css';
-
-const Events = lazy(() => import('./pages/Events'));
-const Team = lazy(() => import('./pages/Team'));
-const Resources = lazy(() => import('./pages/Resources'));
 
 function getRouteFromLocation() {
   const hash = (window.location.hash || '').toLowerCase();
   const path = (window.location.pathname || '').toLowerCase();
+  if (hash.includes('font-test') || path.includes('font-test')) {
+    return 'font-test';
+  }
   if (hash.includes('event') || path.includes('event')) {
     return 'events';
   }
@@ -21,13 +24,14 @@ function getRouteFromLocation() {
   if (hash.includes('resource') || path.includes('resource')) {
     return 'resources';
   }
+  if (hash.includes('gallery') || path.includes('gallery')) {
+    return 'gallery';
+  }
   return 'home';
 }
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(getRouteFromLocation);
-  const [cursor, setCursor] = useState({ x: -100, y: -100, visible: false });
-  const [atFooter, setAtFooter] = useState(false);
 
   const navigateTo = useCallback((route) => {
     const r = (route || '').toLowerCase();
@@ -40,6 +44,9 @@ function App() {
     } else if (r.includes('resource')) {
       if (window.location.hash !== '#resources') window.location.hash = '#resources';
       setCurrentRoute('resources');
+    } else if (r.includes('gallery')) {
+      if (window.location.hash !== '#gallery') window.location.hash = '#gallery';
+      setCurrentRoute('gallery');
     } else {
       if (window.location.hash !== '' && window.location.hash !== '#') window.location.hash = '#';
       setCurrentRoute('home');
@@ -73,8 +80,7 @@ function App() {
         navigateTo('team');
       } else if (
         href === '#events' ||
-        href === '#/events' ||
-        href.includes('/events')
+        href === '#/events'
       ) {
         e.preventDefault();
         navigateTo('events');
@@ -85,6 +91,13 @@ function App() {
       ) {
         e.preventDefault();
         navigateTo('resources');
+      } else if (
+        href === '#gallery' ||
+        href === '#/gallery' ||
+        href.includes('/gallery')
+      ) {
+        e.preventDefault();
+        navigateTo('gallery');
       } else if (href === '#home' || href === '#hero') {
         const route = getRouteFromLocation();
         if (route !== 'home') {
@@ -103,78 +116,27 @@ function App() {
     };
   }, [navigateTo]);
 
-  useEffect(() => {
-    let frame;
-    const updateCursor = (event) => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
-        setCursor({
-          x: event.clientX,
-          y: event.clientY,
-          visible: true,
-          onOrange: Boolean(hoveredElement?.closest('.main-footer')),
-        });
-      });
-    };
-    const hideCursor = () => setCursor((previous) => ({ ...previous, visible: false }));
-    const updateFooterState = () => {
-      const footer = document.querySelector('.main-footer');
-      setAtFooter(Boolean(footer && footer.getBoundingClientRect().top <= window.innerHeight - 24));
-    };
-
-    document.addEventListener('mousemove', updateCursor, { passive: true });
-    document.addEventListener('mouseleave', hideCursor);
-    window.addEventListener('scroll', updateFooterState, { passive: true });
-    window.addEventListener('resize', updateFooterState);
-    updateFooterState();
-    return () => {
-      cancelAnimationFrame(frame);
-      document.removeEventListener('mousemove', updateCursor);
-      document.removeEventListener('mouseleave', hideCursor);
-      window.removeEventListener('scroll', updateFooterState);
-      window.removeEventListener('resize', updateFooterState);
-    };
-  }, [currentRoute]);
-
-  const handlePageJump = () => {
-    if (atFooter) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    document.querySelector('.main-footer')?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  };
-
   return (
     <div className="app-shell">
-      <ParticleField />
-      <div
-        className={`site-cursor ${cursor.visible ? 'is-visible' : ''} ${cursor.onOrange ? 'on-orange' : ''}`}
-        style={{ transform: `translate3d(${cursor.x}px, ${cursor.y}px, 0)` }}
-        aria-hidden="true"
-      >
-        <span className="site-cursor-dot" />
-      </div>
+      {/* Single Source of Truth: HeroWordmark fixed layer outside the scrolling hero */}
+      <HeroWordmark currentRoute={currentRoute} />
+
       <Navbar
         currentRoute={currentRoute}
         onNavigate={navigateTo}
       />
       <main className="app-main-content">
-        <Suspense fallback={<div className="route-loading" aria-hidden="true" />}>
-          {currentRoute === 'events' && <Events onNavigate={navigateTo} />}
-          {currentRoute === 'team' && <Team onNavigate={navigateTo} />}
-          {currentRoute === 'resources' && <Resources onNavigate={navigateTo} />}
-          {currentRoute === 'home' && <Home onNavigate={navigateTo} />}
-        </Suspense>
+        {currentRoute === 'events' && <Events onNavigate={navigateTo} />}
+        {currentRoute === 'team' && <Team onNavigate={navigateTo} />}
+        {currentRoute === 'resources' && <Resources onNavigate={navigateTo} />}
+        {currentRoute === 'gallery' && <Gallery onNavigate={navigateTo} />}
+        {currentRoute === 'font-test' && <FontTest />}
+        {currentRoute === 'home' && (
+          <Home
+            onNavigate={navigateTo}
+          />
+        )}
       </main>
-      <button
-        type="button"
-        className={`page-jump-button ${atFooter ? 'is-up' : ''}`}
-        onClick={handlePageJump}
-        aria-label={atFooter ? 'Back to top' : 'Go to footer'}
-      >
-        {atFooter ? <ArrowUp size={19} /> : <ArrowDown size={19} />}
-      </button>
     </div>
   );
 }

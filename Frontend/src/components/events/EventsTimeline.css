@@ -1,0 +1,365 @@
+/* =========================================================
+   EVENTS TIMELINE (CENTERED SPINE, ALTERNATING LANDSCAPE CARDS)
+   Desktop (900px and wider):
+   - Container max-width 1200px, centered.
+   - CSS grid per row with 3 columns: card (1fr), spine (64px), card (1fr).
+   - 2px gold spine runs down CENTER.
+   - Short gold hairline connector (28px) joins star to card edge at vertical middle.
+   - Gap between rows ~36px.
+   ========================================================= */
+
+.events-timeline-container {
+  position: relative;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto 80px;
+  padding: 0 16px 24px;
+  --spine-progress: 0;
+  box-sizing: border-box;
+}
+
+/* Spine track: Center of the 1200px container */
+.timeline-spine-track {
+  position: absolute;
+  top: 20px;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: rgba(245, 185, 58, 0.16);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Spine scaleY pseudo/draw element */
+.timeline-spine-draw {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    var(--gold) 0%,
+    var(--gold-bright) 70%,
+    #ffffff 100%
+  );
+  transform-origin: top center;
+  transform: scaleY(var(--spine-progress, 0));
+  box-shadow: 0 0 10px rgba(245, 185, 58, 0.7);
+  will-change: transform;
+}
+
+.timeline-year-section {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.timeline-rows-container {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* Row Grid: 3 columns (1fr, 64px, 1fr) */
+.timeline-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 64px 1fr;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+
+  /* Reveal animation: transform & opacity only */
+  opacity: 0;
+  transition:
+    opacity 600ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--card-stagger, 0ms),
+    transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1) var(--card-stagger, 0ms);
+}
+
+/* Card on left: slides in from left (-24px) */
+.timeline-row-grid.card-on-left {
+  transform: translateX(-24px);
+}
+
+/* Card on right: slides in from right (+24px) */
+.timeline-row-grid.card-on-right {
+  transform: translateX(24px);
+}
+
+.timeline-row-grid.is-revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Card columns */
+.timeline-col-card {
+  width: 100%;
+  display: flex;
+}
+
+.left-card-col {
+  justify-content: flex-end;
+}
+
+.right-card-col {
+  justify-content: flex-start;
+}
+
+/* Spine column */
+.timeline-col-spine {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 5;
+}
+
+/* Wrapper joining card and connector */
+.card-and-connector-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.left-card-col .card-and-connector-wrap {
+  justify-content: flex-end;
+}
+
+.right-card-col .card-and-connector-wrap {
+  justify-content: flex-start;
+}
+
+/* 28px connector from star joins the card nearest vertical edge at vertical middle */
+.star-connector {
+  width: 28px;
+  height: 1px;
+  background: rgba(245, 185, 58, 0.45);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.connector-right {
+  margin-left: 0;
+}
+
+.connector-left {
+  margin-right: 0;
+}
+
+/* =========================================================
+   STAR NODES
+   - Inline SVG five-point star matching CodeStars logo.
+   - Size 22px, flagship 30px.
+   - Not reached: outline only, muted gold at ~35% opacity.
+   - Reached: filled gold with soft glow (pseudo radial glow, animated on opacity only).
+   - Pop-in: scale 0.6 to 1, rotate -18deg to 0 over 500ms.
+   - Upcoming events: glow pulses slowly.
+   ========================================================= */
+
+.timeline-star-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+}
+
+.timeline-star-node.is-flagship {
+  width: 40px;
+  height: 40px;
+}
+
+.star-svg {
+  position: relative;
+  z-index: 2;
+  transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.star-polygon {
+  stroke: rgba(245, 185, 58, 0.45);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  fill: transparent;
+  transition: fill 400ms ease, stroke 400ms ease;
+}
+
+/* Soft radial glow on pseudo-element animated on opacity only */
+.star-radial-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 185, 58, 0.5) 0%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Reached State */
+.timeline-star-node.is-reached .star-polygon {
+  fill: var(--gold-bright);
+  stroke: #ffffff;
+}
+
+.timeline-star-node.is-reached .star-svg {
+  animation: starPopIn 500ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.timeline-star-node.is-reached .star-radial-glow {
+  opacity: 1;
+}
+
+@keyframes starPopIn {
+  0% {
+    transform: scale(0.6) rotate(-18deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Upcoming events: the glow pulses slowly */
+.timeline-star-node.is-upcoming .star-radial-glow {
+  opacity: 0.8;
+  animation: upcomingGlowPulse 2.4s infinite ease-in-out;
+}
+
+@keyframes upcomingGlowPulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Year expander */
+.timeline-year-expander-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0 30px;
+}
+
+.timeline-year-expander-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  background: rgba(18, 27, 48, 0.7);
+  border: 1px dashed rgba(245, 185, 58, 0.35);
+  border-radius: 9999px;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.timeline-year-expander-btn:hover {
+  background: var(--glow);
+  border-color: var(--gold);
+  color: #ffffff;
+}
+
+.expander-plus {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* =========================================================
+   MOBILE RESPONSIVENESS (Below 900px)
+   - Spine moves to left edge (~20px from edge).
+   - Stars sit on it.
+   - Every card is full width of remaining column.
+   ========================================================= */
+
+@media (max-width: 899px) {
+  .events-timeline-container {
+    padding: 0 16px 40px;
+  }
+
+  /* Spine at left ~20px */
+  .timeline-spine-track {
+    left: 20px;
+    transform: none;
+  }
+
+  .timeline-rows-container {
+    gap: 28px;
+  }
+
+  .timeline-row-grid {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 44px;
+    position: relative;
+    transform: translateY(20px) !important;
+  }
+
+  .timeline-row-grid.is-revealed {
+    transform: translateY(0) !important;
+  }
+
+  .timeline-col-spine {
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+  }
+
+  .timeline-col-card.left-card-col,
+  .timeline-col-card.right-card-col {
+    width: 100%;
+    display: block;
+  }
+
+  .left-card-col:empty,
+  .right-card-col:empty {
+    display: none;
+  }
+
+  .star-connector {
+    display: none;
+  }
+
+  .card-and-connector-wrap {
+    width: 100%;
+    display: block;
+  }
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .timeline-row-grid {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .star-svg {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .star-radial-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .timeline-spine-draw {
+    transition: none !important;
+  }
+}

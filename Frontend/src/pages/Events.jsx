@@ -1,404 +1,264 @@
-import React, { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import {
-  Trophy,
-  Users,
-  Zap,
-  Calendar,
-  Clock,
-  ArrowRight,
-  ExternalLink,
-  ChevronRight,
-  Star,
-  Flame,
-  Coffee,
-  ArrowUpRight,
-} from 'lucide-react';
-
-import bloodBytesImg from '../assets/events photo/bloody_bites.webp';
-import codeUncodeImg from '../assets/events photo/code_uncode_poolprize.jpg';
-import bountyImg from '../assets/events photo/bounty.webp';
-import mockContestImg from '../assets/events photo/MOCK_CONTEST .webp';
-import feContestImg from '../assets/events photo/FE_CONTEST.webp';
-import icpcImg from '../assets/events photo/icpc_logo.png';
-import cfgImg from '../assets/events photo/cfg.webp';
-
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import EventsHeader from '../components/events/EventsHeader';
+import EventsFilterBar from '../components/events/EventsFilterBar';
+import NextUpSpotlight from '../components/events/NextUpSpotlight';
+import EventsTimeline from '../components/events/EventsTimeline';
+import EventDetail from '../components/events/EventDetail';
 import Footer from '../components/Footer';
+import { eventsData, getStatus, sortEventsDescending } from '../data/events';
+import { getNextEvent } from '../utils/eventState';
 import './Events.css';
 
-gsap.registerPlugin(ScrollTrigger);
+/**
+ * Parse filter params from window.location.hash
+ * e.g. #events?status=upcoming&year=2025
+ * or #events/code-uncode-2025
+ */
+function parseEventsRoute() {
+  const hash = window.location.hash || '';
+  // Check query string in hash: #events...?...
+  const qIndex = hash.indexOf('?');
+  const filters = { status: 'all', year: 'all' };
 
-const BadgeIcon = ({ type }) => {
-  const map = {
-    flagship: React.createElement(Star, { size: 11, strokeWidth: 2.5 }),
-    new: React.createElement(Zap, { size: 11, strokeWidth: 2.5 }),
-    premium: React.createElement(Flame, { size: 11, strokeWidth: 2.5 }),
-    interaction: React.createElement(Coffee, { size: 11, strokeWidth: 2.5 }),
-  };
-  return map[type] || null;
-};
+  if (qIndex !== -1) {
+    const searchParams = new URLSearchParams(hash.slice(qIndex + 1));
+    const statusParam = searchParams.get('status');
+    const yearParam = searchParams.get('year');
 
-function useCounter(end, duration, start) {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!start || !ref.current) return;
-    const el = ref.current;
-    const raw = end.replace(/[^0-9]/g, '');
-    const prefix = end.match(/^[^0-9]*/)?.[0] || '';
-    const suffix = end.match(/[^0-9]*$/)?.[0] || '';
-    const target = parseInt(raw, 10);
-    if (isNaN(target)) {
-      el.textContent = end;
-      return;
+    if (statusParam && ['all', 'upcoming', 'past'].includes(statusParam.toLowerCase())) {
+      filters.status = statusParam.toLowerCase();
     }
-    const obj = { val: 0 };
-    gsap.to(obj, {
-      val: target,
-      duration: duration / 1000,
-      ease: 'power3.out',
-      onUpdate: () => {
-        el.textContent = prefix + Math.round(obj.val).toLocaleString('en-IN') + suffix;
-      },
-    });
-  }, [start]);
-  return ref;
+    if (yearParam) {
+      filters.year = yearParam.trim();
+    }
+  }
+
+  // Check if detail route: #events/slug
+  const baseHash = qIndex !== -1 ? hash.slice(0, qIndex) : hash;
+  const detailMatch = baseHash.match(/^#events\/([a-zA-Z0-9_-]+)/i);
+  if (detailMatch) {
+    return {
+      view: 'detail',
+      slug: detailMatch[1],
+      filters,
+    };
+  }
+
+  return { view: 'list', slug: null, filters };
 }
 
-function StatItem({ stat, visible }) {
-  const numRef = useCounter(stat.raw, 2000, visible);
-  return React.createElement(
-    'div',
-    { className: 'ev2-stat-item' },
-    React.createElement('p', { className: 'ev2-stat-label' }, stat.label),
-    React.createElement('p', { className: 'ev2-stat-number', ref: numRef }, stat.raw)
-  );
+/**
+ * Serialize filter state into URL hash
+ */
+function serializeFiltersToHash(filters) {
+  const params = new URLSearchParams();
+  if (filters.status && filters.status !== 'all') {
+    params.set('status', filters.status);
+  }
+  if (filters.year && filters.year !== 'all') {
+    params.set('year', filters.year);
+  }
+
+  const queryStr = params.toString();
+  return queryStr ? `#events?${queryStr}` : '#events';
 }
 
 export default function Events({ onNavigate }) {
-  const rootRef = useRef(null);
-  const heroSubRef = useRef(null);
-  const statsRef = useRef(null);
-  const [statsVisible, setStatsVisible] = React.useState(false);
+  const [routeInfo, setRouteInfo] = useState(parseEventsRoute);
+  const [statusFilter, setStatusFilter] = useState(() => routeInfo.filters.status);
+  const [selectedYear, setSelectedYear] = useState(() => routeInfo.filters.year);
 
+  // Preserve scroll position when entering detail page and restoring upon back
+  const savedScrollPositionRef = useRef(0);
+
+  // Listen to hash changes for deep links / back navigation
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const handleHashChange = () => {
+      const parsed = parseEventsRoute();
+      setRouteInfo(parsed);
+      if (parsed.view === 'list') {
+        setStatusFilter(parsed.filters.status);
+        setSelectedYear(parsed.filters.year);
+      }
+    };
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        heroSubRef.current,
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: 0.7 }
-      );
-
-      gsap.utils.toArray('.ev2-reveal').forEach((el) => {
-        gsap.fromTo(
-          el,
-          { opacity: 0, y: 40 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            ease: 'power3.out',
-            scrollTrigger: { trigger: el, start: 'top 88%', once: true },
-          }
-        );
-      });
-
-      ScrollTrigger.create({
-        trigger: statsRef.current,
-        start: 'top 85%',
-        once: true,
-        onEnter: () => setStatsVisible(true),
-      });
-
-    }, rootRef);
-
-    return () => ctx.revert();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const stats = [
-    { raw: 'Rs.2,50,000+', label: 'Total Prize Pool' },
-    { raw: '4000+', label: 'Total Participants' },
-    { raw: '370+', label: 'Participating Institutes' },
-    { raw: '3', label: 'Competition Events' },
-  ];
+  // Sync state changes to URL hash (when in list view)
+  const updateUrlFilters = useCallback((nextStatus, nextYr) => {
+    const newHash = serializeFiltersToHash({
+      status: nextStatus,
+      year: nextYr,
+    });
+    if (window.location.hash !== newHash) {
+      window.history.replaceState(null, '', newHash);
+    }
+  }, []);
 
-  const previousEvents = [
-    {
-      id: 'code-uncode',
-      badge: 'Flagship Event',
-      badgeType: 'flagship',
-      prize: 'Rs.2,00,000 Prize Pool',
-      title: 'Code UnCode 2025 Championship',
-      subtitle: 'Code UnCode',
-      image: codeUncodeImg,
-      description:
-        "Mumbai's premier ICPC-style solo competitive programming championship. Experience the ultimate coding challenge with 2000+ participants from 500+ institutes.",
-      dateLocation: 'February 2025 . Mumbai',
-      btnText: 'Learn More',
-      btnUrl: 'https://codeuncode.djscodestars.in/',
-      isExternal: true,
-    },
-    {
-      id: 'code-bounty',
-      badge: 'Flagship Event',
-      badgeType: 'flagship',
-      title: 'Code Bounty Challenge',
-      subtitle: 'Intra-College Competitive Programming Event',
-      image: bountyImg,
-      description:
-        'A thrilling two round Coding Contest where your problem solving skills will be put to test',
-      dateLocation: 'March 2026 . Mumbai',
-      btnText: 'Notify Me',
-      btnUrl: '#',
-      isExternal: false,
-    },
-    {
-      id: 'mock-contest',
-      badge: 'New Event',
-      badgeType: 'new',
-      title: 'MOCK CONTEST',
-      subtitle: 'Exclusively for 2nd Year Coders',
-      image: mockContestImg,
-      description:
-        'Sharpen your competitive programming instincts in an ICPC simulated environment with live standings and post-contest problem discussions.',
-      dateLocation: 'October 2025 . IT Dept, DJSCE',
-      btnText: 'Contest Page',
-      btnUrl: 'https://codeforces.com/group/g6lZJwfgjF',
-      isExternal: true,
-    },
-    {
-      id: 'fe-contest',
-      badge: 'New Event',
-      badgeType: 'new',
-      title: 'FE Contest',
-      subtitle: 'First Year Algorithmic Faceoff',
-      image: feContestImg,
-      description:
-        'A dedicated beginner-friendly programming arena curated to ignite logic building, data structure foundations, and coding passion right from year one.',
-      dateLocation: 'Annual . DJSCE Campus',
-      btnText: 'Explore Details',
-      btnUrl: '#',
-      isExternal: false,
-    },
-    {
-      id: 'icpc-camp',
-      badge: 'Premium Event',
-      badgeType: 'premium',
-      title: 'ICPC Camp',
-      subtitle: 'Advanced Problem Solving Bootcamps',
-      image: icpcImg,
-      description:
-        'Intensive multi-day bootcamp mentoring students on segment trees, Fenwick trees, tree flattenings, dynamic programming optimizations, and high-tier contest strategies.',
-      dateLocation: 'Summer / Winter Sessions',
-      btnText: 'View Syllabus',
-      btnUrl: '#',
-      isExternal: false,
-    },
-    {
-      id: 'coffee-googlers',
-      badge: 'Interaction Event',
-      badgeType: 'interaction',
-      title: 'Coffee-with-Googlers',
-      subtitle: 'Exclusive AMA & Mentorship Session',
-      image: cfgImg,
-      description:
-        'Direct interaction with DJSCE alumni and Google software engineers discussing technical interview preparation, ICPC benefits, system design, and career roadmaps.',
-      dateLocation: 'Special Mentorship Series',
-      btnText: 'Read Highlights',
-      btnUrl: '#',
-      isExternal: false,
-    },
-  ];
-
-  const badgeClass = {
-    flagship: 'bc-flagship',
-    new: 'bc-new',
-    premium: 'bc-premium',
-    interaction: 'bc-interaction',
+  const handleStatusChange = (val) => {
+    setStatusFilter(val);
+    updateUrlFilters(val, selectedYear);
   };
 
+  const handleYearChange = (yr) => {
+    setSelectedYear(yr);
+    updateUrlFilters(statusFilter, yr);
+  };
+
+  const handleResetFilters = () => {
+    setStatusFilter('all');
+    setSelectedYear('all');
+    updateUrlFilters('all', 'all');
+  };
+
+  // Navigate to event detail page
+  const handleExploreEvent = (slug) => {
+    savedScrollPositionRef.current = window.scrollY;
+    const filterQuery = serializeFiltersToHash({
+      status: statusFilter,
+      year: selectedYear,
+    }).replace(/^#events\??/, '');
+    window.location.hash = filterQuery ? `#events/${slug}?${filterQuery}` : `#events/${slug}`;
+    setRouteInfo({ view: 'detail', slug, filters: { status: statusFilter, year: selectedYear } });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Back to events list with state & scroll restoration
+  const handleBackToList = () => {
+    const restoreHash = serializeFiltersToHash({
+      status: statusFilter,
+      year: selectedYear,
+    });
+    window.location.hash = restoreHash;
+    setRouteInfo({
+      view: 'list',
+      slug: null,
+      filters: { status: statusFilter, year: selectedYear },
+    });
+
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: savedScrollPositionRef.current || 0,
+        behavior: 'smooth',
+      });
+    });
+  };
+
+  const availableYears = useMemo(() => {
+    const set = new Set();
+    eventsData.forEach((e) => {
+      const yr = new Date(e.startDate).getFullYear().toString();
+      set.add(yr);
+    });
+    return Array.from(set).sort((a, b) => Number(b) - Number(a));
+  }, []);
+
+  const [currentTick, setCurrentTick] = useState(() => Date.now());
+
+  // Determine next event based on currentTick
+  const nextEvent = useMemo(() => {
+    return getNextEvent(eventsData, currentTick);
+  }, [currentTick]);
+
+  // Spotlight visibility check:
+  // Hide when a filter is active that excludes the next event (status=past, or a year not containing it)
+  // and when getNextEvent is null
+  const showSpotlight = useMemo(() => {
+    if (!nextEvent) return false;
+    if (statusFilter === 'past') return false;
+    if (selectedYear !== 'all') {
+      const evYear = new Date(nextEvent.startDate).getFullYear().toString();
+      if (evYear !== selectedYear) return false;
+    }
+    return true;
+  }, [nextEvent, statusFilter, selectedYear]);
+
+  // Filtered events
+  const filteredEvents = useMemo(() => {
+    const now = new Date(currentTick);
+    return sortEventsDescending(eventsData).filter((ev) => {
+      // 1. Status Filter
+      if (statusFilter !== 'all') {
+        const s = getStatus(ev, now);
+        if (statusFilter === 'upcoming') {
+          if (s !== 'upcoming' && s !== 'live') return false;
+        } else if (statusFilter === 'past') {
+          if (s !== 'completed') return false;
+        }
+      }
+
+      // 2. Year Filter
+      if (selectedYear !== 'all') {
+        const evYear = new Date(ev.startDate).getFullYear().toString();
+        if (evYear !== selectedYear) return false;
+      }
+
+      return true;
+    });
+  }, [statusFilter, selectedYear, currentTick]);
+
+  // If in detail route
+  if (routeInfo.view === 'detail') {
+    return (
+      <EventDetail
+        slug={routeInfo.slug}
+        onBack={handleBackToList}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+
   return (
-    <div className="ev2-root" ref={rootRef}>
-      {/* Background Ambience */}
-      <div className="ev2-bg-fixed">
-        <div className="ev2-grid-layer" />
-        <div className="ev2-scanline" />
-      </div>
+    <div className="events-page-root">
+      {/* 1. Page Header */}
+      <EventsHeader />
 
-      {/* Hero Section */}
-      <section className="ev2-hero">
-        <div className="ev2-hero-inner">
-          <h1 className="ev2-hero-title">Events</h1>
-          <p className="ev2-hero-sub" ref={heroSubRef}>
-            Join Mumbai's most prestigious coding competitions. Three epic events designed to
-            challenge, inspire, and celebrate the finest programming talent in the region.
-          </p>
-        </div>
-      </section>
+      {/* 2. Non-sticky Minimal Filter Bar */}
+      <EventsFilterBar
+        statusFilter={statusFilter}
+        onStatusChange={handleStatusChange}
+        availableYears={availableYears}
+        selectedYear={selectedYear}
+        onYearChange={handleYearChange}
+        resultCount={filteredEvents.length}
+        onResetFilters={handleResetFilters}
+      />
 
-      {/* Statistics Section: Photo 2 style (all in 1 line, minimized height) */}
-      <section className="ev2-stats-section" ref={statsRef}>
-        <div className="ev2-stats-inner ev2-reveal">
-          <div className="ev2-stats-row">
-            {stats.map((s, i) => (
-              <React.Fragment key={i}>
-                <StatItem stat={s} visible={statsVisible} />
-                {i < stats.length - 1 && <div className="ev2-stats-divider" />}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Spotlight: "Next up" section */}
+      {showSpotlight && (
+        <NextUpSpotlight
+          event={nextEvent}
+          onNowTick={setCurrentTick}
+        />
+      )}
 
-      {/* Upcoming Event: BloodBytes Showcase with Photo */}
-      <section className="ev2-upcoming">
-        <div className="ev2-container">
-          <div className="ev2-section-head ev2-reveal">
-            <span className="ev2-section-eyebrow">
-              <Calendar size={12} strokeWidth={2.5} /> Mark Your Calendars
-            </span>
-            <h2 className="ev2-section-title">Upcoming Events</h2>
-            <p className="ev2-section-sub">
-              Join us for electrifying competitions, workshops, and tech experiences that challenge
-              your code and creativity
+      {/* 3. The Timeline */}
+      {filteredEvents.length > 0 ? (
+        <EventsTimeline
+          events={filteredEvents}
+          onExplore={handleExploreEvent}
+        />
+      ) : (
+        <div className="events-empty-state" role="status">
+          <div className="empty-state-card">
+            <h3 className="empty-state-title">No events match your filters</h3>
+            <p className="empty-state-desc">
+              Try adjusting your status or year filters to find what you're looking for.
             </p>
-          </div>
-
-          <div className="ev2-feature-card ev2-reveal">
-            <div className="ev2-fc-badge-row">
-              <span className="ev2-fc-badge">
-                <Flame size={12} strokeWidth={2.5} /> FEATURED HALLOWEEN SHOWDOWN
-              </span>
-              <span className="ev2-fc-prize">
-                <Trophy size={12} strokeWidth={2.5} /> Prize: Rs.12,000+
-              </span>
-            </div>
-
-            <div className="ev2-fc-grid">
-              {/* Left Column: Event Photo & Badges */}
-              <div className="ev2-fc-media-col">
-                <div className="ev2-fc-img-wrapper">
-                  <img src={bloodBytesImg} alt="BloodBytes Halloween Contest" className="ev2-fc-img" loading="lazy" decoding="async" />
-                  <div className="ev2-fc-img-overlay" />
-                  <span className="ev2-fc-live-pill">
-                    <span className="ev2-pulse-dot" /> LIVE EVENT
-                  </span>
-                </div>
-
-                <div className="ev2-fc-tags">
-                  {['Coding Contest', 'Halloween', 'Spooky', 'Competitive Programming'].map((t) => (
-                    <span key={t} className="ev2-fc-tag">
-                      <ChevronRight size={10} strokeWidth={3} /> {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right Column: Info & Specs */}
-              <div className="ev2-fc-content-col">
-                <h3 className="ev2-fc-title">BloodBytes</h3>
-                <h4 className="ev2-fc-subhead">A Halloween Coding Showdown</h4>
-                <p className="ev2-fc-desc">
-                  Enter the arena where logic bleeds into creativity. BloodBytes is a Halloween-themed
-                  coding contest, a spine-chilling test of your programming instincts and problem-solving
-                  skills. Battle against time, bugs, and brain-twisters in this thrilling showdown that
-                  separates the mortals from the true code warriors.
-                </p>
-
-                <div className="ev2-specs-panel">
-                  {[
-                    { Icon: Calendar, label: 'Date', value: 'October 31, 2025' },
-                    { Icon: Clock, label: 'Time', value: '10:00 AM - 5:00 PM' },
-                    { Icon: Users, label: 'Participants', value: 'FE, SE & TE Students' },
-                    { Icon: Trophy, label: 'Prize', value: 'Rs.12,000+', gold: true },
-                  ].map((row) => (
-                    <div key={row.label} className="ev2-spec-row">
-                      <span className="ev2-spec-label">
-                        <row.Icon size={14} strokeWidth={2} /> {row.label}
-                      </span>
-                      <span className={row.gold ? 'ev2-spec-val gold' : 'ev2-spec-val'}>{row.value}</span>
-                    </div>
-                  ))}
-
-                  <button
-                    className="ev2-register-btn"
-                    onClick={() =>
-                      alert('Registrations for BloodBytes opening soon! Stay tuned on Discord & WhatsApp.')
-                    }
-                  >
-                    Register for BloodBytes
-                    <ArrowRight size={15} strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
-            </div>
+            <button
+              type="button"
+              className="empty-state-reset-btn"
+              onClick={handleResetFilters}
+            >
+              Reset filters
+            </button>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Previous Events Grid with Event Photos */}
-      <section className="ev2-previous">
-        <div className="ev2-container">
-          <div className="ev2-section-head ev2-reveal">
-            <h2 className="ev2-section-title">Previous Events</h2>
-            <p className="ev2-section-sub">
-              Three distinct competitions, each designed to test different aspects of programming excellence
-            </p>
-          </div>
-
-          <div className="ev2-prev-grid">
-            {previousEvents.map((evt, i) => (
-              <div key={evt.id} className={`ev2-prev-card ev2-reveal ev2-delay-${i % 3}`}>
-                <div className={`ev2-card-accent ${badgeClass[evt.badgeType]}`} />
-
-                {/* Event Photo Cover */}
-                <div className="ev2-card-thumb-wrap">
-                  <img src={evt.image} alt={evt.title} className="ev2-card-thumb" loading="lazy" decoding="async" />
-                  <div className="ev2-card-thumb-gradient" />
-                  <div className="ev2-thumb-badges">
-                    <span className={`ev2-badge ${badgeClass[evt.badgeType]}`}>
-                      <BadgeIcon type={evt.badgeType} />
-                      {evt.badge}
-                    </span>
-                    {evt.prize && (
-                      <span className="ev2-prize-pill">
-                        <Trophy size={10} strokeWidth={2.5} /> {evt.prize}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="ev2-prev-body">
-                  <span className="ev2-prev-sub">{evt.subtitle}</span>
-                  <h3 className="ev2-prev-title">{evt.title}</h3>
-                  <p className="ev2-prev-desc">{evt.description}</p>
-                </div>
-
-                <div className="ev2-prev-footer">
-                  <span className="ev2-prev-meta">
-                    <Calendar size={11} strokeWidth={2} /> {evt.dateLocation}
-                  </span>
-                  {evt.isExternal ? (
-                    <a href={evt.btnUrl} target="_blank" rel="noreferrer" className="ev2-card-btn">
-                      {evt.btnText} <ExternalLink size={11} strokeWidth={2.5} />
-                    </a>
-                  ) : (
-                    <button
-                      className="ev2-card-btn"
-                      onClick={() => alert(`Updates for ${evt.title} will be shared with the community!`)}
-                    >
-                      {evt.btnText} <ArrowUpRight size={11} strokeWidth={2.5} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      {/* 4. Footer */}
       <Footer onNavigate={onNavigate} />
     </div>
   );

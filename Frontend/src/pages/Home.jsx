@@ -1,262 +1,825 @@
-import React, { useState, useRef, useEffect } from 'react';
-import ScatteredGallery from '../components/ScatteredGallery';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ArrowDown } from 'lucide-react';
+import { heroData } from '../data/home';
+import Starfield from '../components/home/Starfield';
+import WhatWeAre from '../components/home/WhatWeAre';
+import FeaturedEvents from '../components/home/FeaturedEvents';
+import Announcements from '../components/home/Announcements';
 import Footer from '../components/Footer';
+import heroPhotos from '../constant/photos';
 import './Home.css';
 
 export default function Home({ onNavigate }) {
-  const [expandedAnnouncements, setExpandedAnnouncements] = useState({});
-  const taglineRef = useRef(null);
+  const [scrollY, setScrollY] = useState(0);
+  const [activePhotoCards, setActivePhotoCards] = useState([]);
+  const [introState, setIntroState] = useState(() => {
+    if (typeof window === 'undefined') {
+      return { bg: true, tagline: true, navbar: true, chevron: true, isDone: true };
+    }
+    const played = !!sessionStorage.getItem('codestars_intro_played');
+    return { bg: played, tagline: played, navbar: played, chevron: played, isDone: played };
+  });
 
-  // Toggle announcement expansion
-  const toggleAnnouncement = (id) => {
-    setExpandedAnnouncements((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
+  const heroSectionRef = useRef(null);
+  const photoIndexRef = useRef(0);
+  const lastPhotoPointerRef = useRef({ x: 0, y: 0 });
+  const photoTimersRef = useRef(new Set());
+  const inactivityTimerRef = useRef(null);
 
-  const scrollTo = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+  const schedulePhotoTimer = useCallback((callback, delay) => {
+    const timer = window.setTimeout(() => {
+      photoTimersRef.current.delete(timer);
+      callback();
+    }, delay);
+    photoTimersRef.current.add(timer);
+    return timer;
+  }, []);
+
+  const clearPhotoTimers = useCallback(() => {
+    photoTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    photoTimersRef.current.clear();
+    inactivityTimerRef.current = null;
+  }, []);
+
+  const resetPhotoInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      window.clearTimeout(inactivityTimerRef.current);
+      photoTimersRef.current.delete(inactivityTimerRef.current);
+    }
+
+    inactivityTimerRef.current = schedulePhotoTimer(() => {
+      inactivityTimerRef.current = null;
+      setActivePhotoCards((cards) => cards.map((card) => ({ ...card, fading: true })));
+      schedulePhotoTimer(() => setActivePhotoCards([]), 700);
+    }, 7000);
+  }, [schedulePhotoTimer]);
+
+  const spawnHeroPhoto = useCallback((x, y) => {
+    const photoPool = heroPhotos;
+    if (!photoPool.length) return;
+
+    const photo = photoPool[photoIndexRef.current % photoPool.length];
+    photoIndexRef.current += 1;
+    const id = `${Date.now()}-${photoIndexRef.current}`;
+
+    setActivePhotoCards((cards) => [
+      ...cards,
+      { id, url: photo.url, x, y, fading: false },
+    ].slice(-4));
+
+    schedulePhotoTimer(() => {
+      setActivePhotoCards((cards) => cards.map((card) => (
+        card.id === id ? { ...card, fading: true } : card
+      )));
+    }, 1800);
+    schedulePhotoTimer(() => {
+      setActivePhotoCards((cards) => cards.filter((card) => card.id !== id));
+    }, 2600);
+    resetPhotoInactivityTimer();
+  }, [resetPhotoInactivityTimer, schedulePhotoTimer]);
+
+  const handleHeroPhotoPointer = (event) => {
+    if (
+      !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      heroState !== 'hero' ||
+      heroMergeProgressRef.current > 0.05
+    ) return;
+
+    const rect = heroSectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const previous = lastPhotoPointerRef.current;
+
+    if (previous.x === 0 && previous.y === 0 || Math.hypot(x - previous.x, y - previous.y) > 30) {
+      lastPhotoPointerRef.current = { x, y };
+      spawnHeroPhoto(x, y);
+    } else {
+      resetPhotoInactivityTimer();
     }
   };
 
+  const handleHeroPhotoLeave = () => {
+    lastPhotoPointerRef.current = { x: 0, y: 0 };
+    resetPhotoInactivityTimer();
+  };
+
+
+
+  useEffect(() => () => clearPhotoTimers(), [clearPhotoTimers]);
+
+  // Cinematic Intro: 2.6s total sequence
+  // 1. 0.00 - 0.90s: background fades in (navy radial glow and starfield opacity 0 -> 1)
+  // 2. 0.35 - 1.75s: wordmark fades in (handled in HeroWordmark.jsx via CSS transition & timeout)
+  // 3. 1.45 - 2.10s: tagline fades in (opacity 0 -> 1, drift 8px -> 0)
+  // 4. 1.80 - 2.40s: navbar fades in and slides down 10px (page scrolling unlocks)
+  // 5. 2.10 - 2.60s: chevron and hairline-with-star fade in
+  useEffect(() => {
+    const played = sessionStorage.getItem('codestars_intro_played');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!played && !reduced) {
+      // Lock scroll until step 4 (1.80s)
+      document.body.style.overflow = 'hidden';
+
+      // Step 1: background fades in immediately (0.00s)
+      const tBg = setTimeout(() => {
+        setIntroState((prev) => ({ ...prev, bg: true }));
+      }, 30);
+
+      // Step 3: tagline fades in at 1.45s
+      const tTagline = setTimeout(() => {
+        setIntroState((prev) => ({ ...prev, tagline: true }));
+      }, 1450);
+
+      // Step 4: navbar fades in at 1.80s (unlock scrolling)
+      const tNavbar = setTimeout(() => {
+        document.body.style.overflow = '';
+        setIntroState((prev) => ({ ...prev, navbar: true }));
+        window.dispatchEvent(new CustomEvent('codestars-navbar-reveal'));
+      }, 1800);
+
+      // Step 5: chevron & hairline at 2.10s
+      const tChevron = setTimeout(() => {
+        setIntroState((prev) => ({ ...prev, chevron: true, isDone: true }));
+        sessionStorage.setItem('codestars_intro_played', 'true');
+        window.dispatchEvent(new CustomEvent('codestars-intro-complete'));
+      }, 2100);
+
+      // Skip instantly on scroll, click or keydown (finish transitions in 200ms)
+      const handleSkip = () => {
+        clearTimeout(tBg);
+        clearTimeout(tTagline);
+        clearTimeout(tNavbar);
+        clearTimeout(tChevron);
+        document.body.style.overflow = '';
+        setIntroState({ bg: true, tagline: true, navbar: true, chevron: true, isDone: true });
+        sessionStorage.setItem('codestars_intro_played', 'true');
+        window.dispatchEvent(new CustomEvent('codestars-intro-skip'));
+        window.dispatchEvent(new CustomEvent('codestars-navbar-reveal'));
+        window.dispatchEvent(new CustomEvent('codestars-intro-complete'));
+      };
+
+      window.addEventListener('click', handleSkip, { once: true });
+      window.addEventListener('keydown', handleSkip, { once: true });
+
+      const onScrollCheck = () => {
+        if (window.scrollY > 10) handleSkip();
+      };
+      window.addEventListener('scroll', onScrollCheck, { passive: true, once: true });
+
+      return () => {
+        clearTimeout(tBg);
+        clearTimeout(tTagline);
+        clearTimeout(tNavbar);
+        clearTimeout(tChevron);
+        document.body.style.overflow = '';
+        window.removeEventListener('click', handleSkip);
+        window.removeEventListener('keydown', handleSkip);
+        window.removeEventListener('scroll', onScrollCheck);
+      };
+    } else {
+      document.body.style.overflow = '';
+      setIntroState({ bg: true, tagline: true, navbar: true, chevron: true, isDone: true });
+      window.dispatchEvent(new CustomEvent('codestars-navbar-reveal'));
+    }
+  }, []);
+
+  // Hero Merge State Machine: 'hero' | 'toMerged' | 'merged' | 'toHero'
+  const [heroState, setHeroState] = useState(() => {
+    if (typeof window !== 'undefined' && window.scrollY > 40) return 'merged';
+    return 'hero';
+  });
+  const heroStateRef = useRef(typeof window !== 'undefined' && window.scrollY > 40 ? 'merged' : 'hero');
+  const [heroMergeProgress, setHeroMergeProgress] = useState(typeof window !== 'undefined' && window.scrollY > 40 ? 1 : 0);
+  const heroMergeProgressRef = useRef(typeof window !== 'undefined' && window.scrollY > 40 ? 1 : 0);
+  const isAnimatingRef = useRef(false);
+  const animCancelRef = useRef(null);
+  const [sectionAnimStyle, setSectionAnimStyle] = useState(null);
+  const [isReversePhaseA, setIsReversePhaseA] = useState(false);
+
+  useEffect(() => {
+    if (heroState === 'hero' && heroMergeProgress <= 0.05) return;
+    clearPhotoTimers();
+    setActivePhotoCards((cards) => cards.length ? [] : cards);
+  }, [clearPhotoTimers, heroMergeProgress, heroState]);
+
+  const updateHeroState = useCallback((nextState, isPhaseA = false) => {
+    heroStateRef.current = nextState;
+    setHeroState(nextState);
+    setIsReversePhaseA(isPhaseA);
+    window.__heroState = nextState;
+    window.dispatchEvent(
+      new CustomEvent('codestars-hero-state-change', {
+        detail: { state: nextState, isPhaseA },
+      })
+    );
+  }, []);
+
+  // Snap to target state without animation on interrupt (anchor jump, page reload, scrollbar drag)
+  const snapToState = useCallback((targetState) => {
+    if (animCancelRef.current) {
+      animCancelRef.current();
+      animCancelRef.current = null;
+    }
+    isAnimatingRef.current = false;
+    window.__isHeroAnimating = false;
+
+    if (targetState === 'hero') {
+      heroMergeProgressRef.current = 0;
+      setHeroMergeProgress(0);
+      window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 0 } }));
+      setSectionAnimStyle(null);
+      updateHeroState('hero', false);
+      window.scrollTo(0, 0);
+    } else {
+      heroMergeProgressRef.current = 1;
+      setHeroMergeProgress(1);
+      window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 1 } }));
+      setSectionAnimStyle(null);
+      updateHeroState('merged', false);
+    }
+  }, [updateHeroState]);
+
+  // Cubic bezier easing helper
+  const cubicBezier = (t) => {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    return 1 - Math.pow(1 - t, 3.2);
+  };
+
+  // State-machine gated transitions
+  const animateHero = useCallback((targetProgress) => {
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (isReduced) {
+      if (isAnimatingRef.current) return;
+      isAnimatingRef.current = true;
+      window.__isHeroAnimating = true;
+
+      if (targetProgress === 0) {
+        // Reduced motion reverse: 150ms crossfade with gate
+        updateHeroState('toHero', true);
+        setSectionAnimStyle({ opacity: 0, transition: 'opacity 150ms ease' });
+        setTimeout(() => {
+          // Gate verified: section opacity is 0
+          window.scrollTo(0, 0);
+          heroMergeProgressRef.current = 0;
+          setHeroMergeProgress(0);
+          window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 0 } }));
+          updateHeroState('hero', false);
+          setSectionAnimStyle(null);
+          isAnimatingRef.current = false;
+          window.__isHeroAnimating = false;
+        }, 150);
+      } else {
+        // Reduced motion forward: 150ms crossfade
+        updateHeroState('toMerged', false);
+        heroMergeProgressRef.current = 1;
+        setHeroMergeProgress(1);
+        window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 1 } }));
+        setSectionAnimStyle({ opacity: 1, transition: 'opacity 150ms ease' });
+        setTimeout(() => {
+          updateHeroState('merged', false);
+          setSectionAnimStyle(null);
+          isAnimatingRef.current = false;
+          window.__isHeroAnimating = false;
+        }, 150);
+      }
+      return;
+    }
+
+    if (isAnimatingRef.current) return;
+    isAnimatingRef.current = true;
+    window.__isHeroAnimating = true;
+
+    const isForward = targetProgress === 1;
+
+    if (isForward) {
+      // FORWARD TRANSITION (hero -> merged):
+      // Sections set visible BEFORE fade-in begins.
+      // 0 to 600ms: Wordmark shrinks/travels into navbar (progress 0 -> 1).
+      // Section content begins fade-in only when wordmark opacity is at or below 0.15 (~350ms).
+      // Mirror rule: Section content opacity <= 0.02 while wordmark > 0.15.
+      updateHeroState('toMerged', false);
+      const startTime = performance.now();
+      let rafId = null;
+
+      animCancelRef.current = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+      };
+
+      const stepForward = (now) => {
+        const elapsed = Math.max(0, now - startTime);
+
+        // 1. Hero wordmark: 0 - 600ms (0 -> 1)
+        const wordmarkT = Math.min(1, elapsed / 600);
+        const currentP = cubicBezier(wordmarkT);
+        heroMergeProgressRef.current = currentP;
+        setHeroMergeProgress(currentP);
+        window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: currentP } }));
+
+        // Wordmark reaches navbar landing and opacity drops below 0.15 by ~390ms.
+        // Before 400ms: Section content opacity MUST be <= 0.02 (strict mirror rule).
+        if (elapsed < 400) {
+          setSectionAnimStyle({ opacity: 0, transform: 'translate3d(0, 24px, 0)' });
+        } else {
+          const sectionT = Math.min(1, (elapsed - 400) / 500);
+          const easeSection = cubicBezier(sectionT);
+          const secOpacity = easeSection;
+          const secTranslateY = (1 - easeSection) * 24;
+          setSectionAnimStyle({
+            opacity: secOpacity,
+            transform: `translate3d(0, ${secTranslateY.toFixed(2)}px, 0)`,
+          });
+        }
+
+        if (elapsed < 900) {
+          rafId = requestAnimationFrame(stepForward);
+        } else {
+          // Final merged state
+          heroMergeProgressRef.current = 1;
+          setHeroMergeProgress(1);
+          window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 1 } }));
+          setSectionAnimStyle(null);
+          updateHeroState('merged', false);
+          isAnimatingRef.current = false;
+          window.__isHeroAnimating = false;
+          animCancelRef.current = null;
+        }
+      };
+
+      rafId = requestAnimationFrame(stepForward);
+    } else {
+      // REVERSE TRANSITION (merged -> hero):
+      // Strict Phase A -> Gate -> Phase B
+      updateHeroState('toHero', true);
+
+      // Phase A: Section out (0 to 350ms):
+      // Section fades to opacity 0 and moves down 16px.
+      // Wordmark, tagline, and decorations have opacity 0 and visibility hidden.
+      // Sections pointer-events none.
+      const phaseAStartTime = performance.now();
+      const phaseADuration = 350;
+      let rafIdA = null;
+
+      animCancelRef.current = () => {
+        if (rafIdA) cancelAnimationFrame(rafIdA);
+      };
+
+      const runPhaseA = () => {
+        return new Promise((resolve) => {
+          const stepPhaseA = (now) => {
+            const elapsed = Math.max(0, now - phaseAStartTime);
+            const t = Math.min(1, elapsed / phaseADuration);
+            const ease = cubicBezier(t);
+            const opacity = 1 - ease;
+            const translateY = ease * 16;
+
+            setSectionAnimStyle({
+              opacity,
+              transform: `translate3d(0, ${translateY.toFixed(2)}px, 0)`,
+              pointerEvents: 'none',
+            });
+
+            if (elapsed < phaseADuration) {
+              rafIdA = requestAnimationFrame(stepPhaseA);
+            } else {
+              // Ensure opacity is strictly 0 and translateY 16px
+              setSectionAnimStyle({
+                opacity: 0,
+                transform: 'translate3d(0, 16px, 0)',
+                pointerEvents: 'none',
+              });
+              resolve();
+            }
+          };
+          rafIdA = requestAnimationFrame(stepPhaseA);
+        });
+      };
+
+      runPhaseA().then(() => {
+        // GATE: Verify section content opacity is <= 0.02
+        const whatWeAreEl = document.querySelector('.what-we-are-content-wrap');
+        const computedSecOpacity = whatWeAreEl
+          ? parseFloat(window.getComputedStyle(whatWeAreEl).opacity || '0')
+          : 0;
+
+        if (computedSecOpacity > 0.02) {
+          // Hard gate guard: force 0 before Phase B starts
+          if (whatWeAreEl) whatWeAreEl.style.opacity = '0';
+        }
+
+        // Phase B: Hero in (350 to 950ms -> 600ms duration)
+        // Switch off isReversePhaseA so hero wordmark and viewport can render
+        setIsReversePhaseA(false);
+        window.dispatchEvent(
+          new CustomEvent('codestars-hero-state-change', {
+            detail: { state: 'toHero', isPhaseA: false },
+          })
+        );
+        window.scrollTo(0, 0);
+
+        const phaseBStartTime = performance.now();
+        const phaseBDuration = 600;
+        let rafIdB = null;
+
+        animCancelRef.current = () => {
+          if (rafIdB) cancelAnimationFrame(rafIdB);
+        };
+
+        const stepPhaseB = (now) => {
+          const elapsed = Math.max(0, now - phaseBStartTime);
+          const t = Math.min(1, elapsed / phaseBDuration);
+          const ease = cubicBezier(t);
+          const currentP = 1 - ease;
+
+          heroMergeProgressRef.current = currentP;
+          setHeroMergeProgress(currentP);
+          window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: currentP } }));
+
+          if (elapsed < phaseBDuration) {
+            rafIdB = requestAnimationFrame(stepPhaseB);
+          } else {
+            // Final hero state
+            heroMergeProgressRef.current = 0;
+            setHeroMergeProgress(0);
+            window.dispatchEvent(new CustomEvent('codestars-hero-progress', { detail: { progress: 0 } }));
+            setSectionAnimStyle(null);
+            window.scrollTo(0, 0);
+            updateHeroState('hero', false);
+            isAnimatingRef.current = false;
+            window.__isHeroAnimating = false;
+            animCancelRef.current = null;
+          }
+        };
+
+        rafIdB = requestAnimationFrame(stepPhaseB);
+      });
+    }
+  }, [cubicBezier, updateHeroState]);
+
+  // Listen to gestures on window for single-scroll trigger with input locking
+  useEffect(() => {
+    let touchStartY = null;
+
+    const handleWheel = (e) => {
+      if (isAnimatingRef.current) {
+        e.preventDefault();
+        return;
+      }
+
+      const currentY = window.scrollY;
+      const currentP = heroMergeProgressRef.current;
+
+      // Downward gesture while expanded at top
+      if (e.deltaY > 0 && currentY <= 15 && currentP < 0.5) {
+        e.preventDefault();
+        animateHero(1);
+      }
+      // Upward gesture while near top of document
+      else if (e.deltaY < 0 && currentY <= 25 && currentP > 0.5) {
+        e.preventDefault();
+        animateHero(0);
+      }
+    };
+
+    const handleTouchStart = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        touchStartY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (isAnimatingRef.current) {
+        e.preventDefault?.();
+        return;
+      }
+      if (touchStartY === null) return;
+      const currentTouchY = e.touches[0].clientY;
+      const deltaY = touchStartY - currentTouchY; // positive = swipe up / scroll down
+      const currentY = window.scrollY;
+      const currentP = heroMergeProgressRef.current;
+
+      if (deltaY >= 20 && currentY <= 15 && currentP < 0.5) {
+        touchStartY = null;
+        e.preventDefault?.();
+        animateHero(1);
+      } else if (deltaY <= -20 && currentY <= 25 && currentP > 0.5) {
+        touchStartY = null;
+        e.preventDefault?.();
+        animateHero(0);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (isAnimatingRef.current) {
+        if (['ArrowDown', 'PageDown', ' ', 'ArrowUp', 'PageUp', 'Home', 'End'].includes(e.key)) {
+          e.preventDefault();
+        }
+        return;
+      }
+
+      const currentY = window.scrollY;
+      const currentP = heroMergeProgressRef.current;
+
+      if (['ArrowDown', 'PageDown', ' '].includes(e.key) && currentY <= 15 && currentP < 0.5) {
+        e.preventDefault();
+        animateHero(1);
+      } else if (['ArrowUp', 'PageUp'].includes(e.key) && currentY <= 25 && currentP > 0.5) {
+        e.preventDefault();
+        animateHero(0);
+      }
+    };
+
+    // Scrollbar jump / direct scroll synchronization / interrupts
+    const handleScrollSync = () => {
+      const currentY = window.scrollY;
+      if (isAnimatingRef.current) {
+        // If user scrolls or jumps during an ongoing animation via scrollbar/wheel, snap to final
+        if (currentY > 40 && heroStateRef.current !== 'merged') {
+          snapToState('merged');
+        } else if (currentY === 0 && heroStateRef.current !== 'hero') {
+          snapToState('hero');
+        }
+        return;
+      }
+
+      if (currentY > 40 && heroMergeProgressRef.current < 1) {
+        snapToState('merged');
+      } else if (currentY === 0 && heroMergeProgressRef.current > 0) {
+        snapToState('hero');
+      }
+    };
+
+    // Listen to hash / popstate / beforeunload interrupts
+    const handleInterrupt = () => {
+      if (isAnimatingRef.current) {
+        const currentY = window.scrollY;
+        if (currentY > 40) {
+          snapToState('merged');
+        } else {
+          snapToState('hero');
+        }
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('scroll', handleScrollSync, { passive: true });
+    window.addEventListener('popstate', handleInterrupt);
+    window.addEventListener('hashchange', handleInterrupt);
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scroll', handleScrollSync);
+      window.removeEventListener('popstate', handleInterrupt);
+      window.removeEventListener('hashchange', handleInterrupt);
+    };
+  }, [animateHero, snapToState]);
+
+  // Track scroll position for secondary effects
   useEffect(() => {
     let frame;
-    const updateTagline = () => {
+    const onScroll = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        if (!taglineRef.current) return;
-        const fadeDistance = Math.max(1, window.innerHeight * 0.35);
-        const opacity = Math.max(0, 1 - window.scrollY / fadeDistance);
-        taglineRef.current.style.opacity = opacity;
-        taglineRef.current.style.transform = `translateY(${(1 - opacity) * -10}px)`;
+        setScrollY(window.scrollY);
       });
     };
 
-    updateTagline();
-    window.addEventListener('scroll', updateTagline, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', updateTagline);
+      window.removeEventListener('scroll', onScroll);
     };
   }, []);
 
-  const announcementsData = [
-    {
-      id: 'ann-1',
-      date: { month: 'MAR', day: '24' },
-      type: 'UPDATE',
-      title: 'Schedule Update: Introduction to CodeStars Rescheduled!',
-      shortDesc: 'Important Update! The Introduction to CodeStars session has been rescheduled to 2nd October 2025 at 11:00 PM. Mark your calendars and don\'t miss this exciting opportunity to learn about CodeStars and the amazing roles we\'re recruiting for!',
-      fullDesc: 'We apologize for any inconvenience caused by this schedule change. The new timing will allow more students to attend and learn about the exciting opportunities at CodeStars. New date: 2nd October 2025. New time: 11:00 PM. All other events remain as scheduled. We look forward to seeing you there!',
-      linkUrl: '#experience',
+  // p is driven by heroMergeProgress (time-based tween on gesture, or scroll snap)
+  const p = heroMergeProgress;
 
-    },
-    {
-      id: 'ann-2',
-      date: { month: 'OCT', day: '01' },
-      type: 'EVENT',
-      title: 'Codestars is Recruiting!',
-      shortDesc: 'Want to be a part of the most exciting Competitive Programming club on campus? This is your chance! Apply now for Co-Committee positions across Technical, Tech-Editorial, Creatives, Marketing, and Events roles.',
-      fullDesc: `We're not just about code. We're building a community where logic meets creativity. From CP practice sessions to coding contests and collaborative events, Codestars does it all.
+  // Tagline and chevron: opacity = 1 - clamp(p / 0.25, 0, 1)
+  const taglineChevronOpacity = Math.max(0, 1 - Math.min(1, p / 0.25));
+  const isTaglineInteractive = taglineChevronOpacity >= 0.1 && heroState === 'hero';
 
-As a Co-committee member, you'll:
-    - Plan events and contests
-    - Connect with coding enthusiasts
-    - Gain leadership experience
+  // Hairline and hero glow: fade out by p = 0.5
+  const hairlineGlowOpacity = Math.max(0, 1 - Math.min(1, p / 0.5));
 
-    We are organizing an intro session on 2nd October 2025 at 11:00 PM and a mock contest on 3rd October 2025, the perfect start to your Codestars journey.
+  // Hero pointer hover logic: active only while p < 0.05, throttled with rAF
+  useEffect(() => {
+    const heroEl = heroSectionRef.current;
+    if (!heroEl) return;
 
-    Available roles:
-    - Technical
-    - Tech-Editorial
-    - Creatives
-    - Marketing
-    - Events
+    let rafId = null;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let isHovering = false;
 
-    Application deadline: 4th October 2025, 11:59 PM
-    Eligibility: Open to Second Year students for Co-Comm positions. Intro session and mock contest are open to all students.
-    Venue: DJ Sanghvi College of Engineering
+    const updateVars = () => {
+      const factor = isHovering ? 0.08 : 0.05;
+      currentX += (targetX - currentX) * factor;
+      currentY += (targetY - currentY) * factor;
 
-    Event timeline:
-    - Oct 2 @ 11:00 PM — Introduction to CodeStars
-    - Oct 3 @ 4:00 PM - 6:00 PM — Mock Contest
-    - Oct 4 @ 11:59 PM — Application Deadline
-    - Oct 6 @ 9:00 AM - 3:00 PM — Co-Comm Interviews Day 1
-    - Oct 7 @ 9:00 AM - 3:00 PM — Co-Comm Interviews Day 2`,
-      linkText: 'Contest Page / Application Form',
-      linkUrl: 'https://forms.gle/zSQRxwb3vysxrAqS8',
-    },
-    {
-      id: 'ann-3',
-      date: { month: 'OCT', day: '03' },
-      type: 'EVENT',
-      title: 'Mock Contest - Exclusively for 2nd Years!',
-      shortDesc: "Greetings, 2nd Years! Welcome to Codestars! We're excited to announce a Mock Contest exclusively for you. Test and sharpen your Competitive Programming skills. New to CP? Don't worry—we've got you covered! You can learn while you compete.",
-      fullDesc: `Exciting problems to test and sharpen your Competitive Programming skills.
-    New to CP? Don't worry, we've got you covered. You can learn while you compete.
-    Come join us, challenge yourself, and kickstart your CP journey with Codestars.
+      if (Math.abs(currentX) < 0.001 && Math.abs(targetX) < 0.001) currentX = 0;
+      if (Math.abs(currentY) < 0.001 && Math.abs(targetY) < 0.001) currentY = 0;
 
-    Eligibility: Exclusively for Second Year students
-    Venue: IT Department, DJ Sanghvi College of Engineering
+      heroEl.style.setProperty('--hero-ptr-x', currentX.toFixed(4));
+      heroEl.style.setProperty('--hero-ptr-y', currentY.toFixed(4));
 
-    Event timeline:
-    - Oct 3 @ 4:00 PM — Contest begins (2 hours to solve programming problems)
-    - Oct 3 @ 6:00 PM — Contest ends (results announced)`,
-      linkText: 'Codeforces Contest Page',
-      linkUrl: 'https://codeforces.com/group/g6lZJwfgjF',
-    },
-  ];
+      const spotlightX = (50 + currentX * 40).toFixed(2);
+      const spotlightY = (50 + currentY * 40).toFixed(2);
+      heroEl.style.setProperty('--hero-spotlight-x', `${spotlightX}%`);
+      heroEl.style.setProperty('--hero-spotlight-y', `${spotlightY}%`);
 
-  const stats = [
-    { number: '15+', label: 'Contests & Hackathons' },
-    { number: '500+', label: 'Community Coders' },
-    { number: 'ICPC', label: 'Regional Finalists' },
-    { number: '100%', label: 'Student Driven' },
-  ];
+      if (isHovering || Math.abs(currentX) > 0.002 || Math.abs(currentY) > 0.002) {
+        rafId = requestAnimationFrame(updateVars);
+      } else {
+        heroEl.style.removeProperty('--hero-ptr-x');
+        heroEl.style.removeProperty('--hero-ptr-y');
+        heroEl.style.removeProperty('--hero-spotlight-x');
+        heroEl.style.removeProperty('--hero-spotlight-y');
+        rafId = null;
+      }
+    };
 
-  const experiences = [
-    {
-      year: '2026',
-      title: 'Mock Contest Series & ICPC Prep',
-      description: 'Intense simulated algorithmic rounds designed to mirror ICPC regional difficulty, featuring live leaderboards and post-contest editorials.',
-      tag: 'Competitive Programming',
-    },
-    {
-      year: '2025',
-      title: 'DJSCE Regionals & Finals',
-      description: 'Annual flagship coding battle bringing together the sharpest minds across colleges for grueling problem-solving rounds and cash prizes.',
-      tag: 'Flagship Event',
-    },
-    {
-      year: '2025',
-      title: 'Felicitation & Awards Gala',
-      description: 'Celebrating winners, runners-up, mentors, and the top coders who represented DJSCE on national coding leaderboards.',
-      tag: 'Awards Ceremony',
-    },
-  ];
+    const onPointerMove = (e) => {
+      if (
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+        window.scrollY > 40 ||
+        heroMergeProgressRef.current > 0.05 ||
+        heroStateRef.current !== 'hero'
+      ) {
+        return;
+      }
+
+      const rect = heroEl.getBoundingClientRect();
+      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+
+      targetX = Math.max(-1, Math.min(1, nx));
+      targetY = Math.max(-1, Math.min(1, ny));
+      isHovering = true;
+      heroEl.classList.add('is-hero-hovered');
+
+      if (!rafId) {
+        rafId = requestAnimationFrame(updateVars);
+      }
+    };
+
+    const onPointerLeave = () => {
+      targetX = 0;
+      targetY = 0;
+      isHovering = false;
+      heroEl.classList.remove('is-hero-hovered');
+      if (!rafId) {
+        rafId = requestAnimationFrame(updateVars);
+      }
+    };
+
+    heroEl.addEventListener('pointermove', onPointerMove, { passive: true });
+    heroEl.addEventListener('pointerleave', onPointerLeave, { passive: true });
+
+    return () => {
+      heroEl.removeEventListener('pointermove', onPointerMove);
+      heroEl.removeEventListener('pointerleave', onPointerLeave);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  const scrollToNext = () => {
+    animateHero(1);
+  };
 
   return (
-    <div className="landing-page-root">
-      {/* ================= HERO SECTION ================= */}
+    <div
+      className={`codestars-homepage-root ${isReversePhaseA ? 'is-reverse-phase-a' : ''}`}
+      data-hero-state={heroState}
+    >
+      {/* Exactly ONE global fixed continuous Starfield across entire page */}
+      <Starfield />
+
+      {/* ================= 1. HERO SECTION ================= */}
       <section
         id="hero"
-        className="hero-section"
+        ref={heroSectionRef}
+        className={`codestars-hero-viewport ${heroState === 'merged' ? 'is-merged' : ''}`}
+        aria-label="Hero"
+        onPointerEnter={handleHeroPhotoPointer}
+        onPointerMove={handleHeroPhotoPointer}
+        onPointerLeave={handleHeroPhotoLeave}
+        style={{
+          opacity: heroState === 'merged' || isReversePhaseA ? 0 : Math.max(0, 1 - Math.min(1, p / 0.85)),
+          pointerEvents: heroState === 'merged' || p >= 0.85 ? 'none' : 'auto',
+          visibility: heroState === 'merged' || isReversePhaseA ? 'hidden' : 'visible',
+        }}
       >
-        {/* The visible title is the scroll-driven element in the navbar. */}
-        <h1 className="sr-only">DJS CodeStars</h1>
+        <div className="hero-photo-trail" aria-hidden="true">
+          {activePhotoCards.map((card) => (
+            <div
+              key={card.id}
+              className={`hero-photo-card ${card.fading ? 'is-fading' : ''}`}
+              style={{
+                left: `${card.x}px`,
+                top: `${card.y}px`,
+              }}
+            >
+              <img src={card.url} alt="" draggable="false" />
+            </div>
+          ))}
+        </div>
 
-        {/* Preserves the original hero composition while the visible title is fixed. */}
-        <div className="hero-title-spacer" aria-hidden="true" />
+        {/* Background Navy Radial Glow (fades in step 1, fades out by p = 0.5) */}
+        <div
+          className={`hero-navy-glow ${introState.bg ? 'is-revealed' : ''}`}
+          style={{ opacity: introState.bg ? hairlineGlowOpacity : 0 }}
+          aria-hidden="true"
+        />
+        <div
+          className={`hero-horizon-glow ${introState.bg ? 'is-revealed' : ''}`}
+          style={{ opacity: introState.bg ? hairlineGlowOpacity : 0 }}
+          aria-hidden="true"
+        />
 
-        {/* Hero Bottom Bar (Centered Tagline) */}
-        <div className="hero-bottom-bar-clean">
-          <p className="hero-tagline" ref={taglineRef}>
-            The official competitive programming committee of DJSCE, organizing ICPC-style contests and workshops to foster coding culture and excellence.
-          </p>
+        {/* Semantic H1 for accessibility */}
+        <h1 className="sr-only">DJS CodeStars — Community of builders and competitive programmers</h1>
+
+        {/* Centered Wordmark Anchor Div (Centered horizontally, at ~42vh)
+            Used solely for layout and measurement of HeroWordmark.
+            Its height matches the rendered wordmark block's height */}
+        <div
+          id="hero-wordmark-anchor"
+          className="hero-wordmark-anchor is-centered"
+        >
+          {/* Sizing box so anchor has exact width & height of the wordmark */}
+          <div className="hero-wordmark-measure-box" aria-hidden="true" />
+        </div>
+
+        {/* Centered Tagline directly beneath the wordmark anchor:
+            Positioned from measured wordmark rect, margin-top >= 32px (and >= 0.9x CodeStars cap height).
+            Fades in step 3 (1.45-2.10s) and fades out by p = 0.25 on scroll.
+            Counter-parallax moves slightly counter to pointer (~4px) */}
+        <div
+          className={`hero-tagline-wrap ${introState.tagline ? 'is-revealed' : ''}`}
+          style={{
+            opacity: introState.tagline && !isReversePhaseA ? taglineChevronOpacity : 0,
+            pointerEvents: isTaglineInteractive ? 'auto' : 'none',
+          }}
+        >
+          <p className="hero-tagline-text">{heroData.tagline}</p>
+        </div>
+
+        {/* Thin Gold Hairline with small star glyph in center at bottom of hero:
+            Fades in step 5 (2.10-2.60s) and fades out by p = 0.5 on scroll */}
+        <div
+          className={`hero-bottom-hairline-wrap ${introState.chevron ? 'is-revealed' : ''}`}
+          style={{ opacity: introState.chevron && !isReversePhaseA ? hairlineGlowOpacity : 0 }}
+          aria-hidden="true"
+        >
+          <div className="hero-bottom-hairline-line" />
+          <div className="hero-bottom-star-glyph">✦</div>
+          <div className="hero-bottom-hairline-line" />
+        </div>
+
+        {/* Chevron button centered at bottom, just above the hairline:
+            Fades in step 5 (2.10-2.60s) and fades out by p = 0.25 on scroll */}
+        <div
+          className={`hero-chevron-anchor ${introState.chevron ? 'is-revealed' : ''}`}
+          style={{
+            opacity: introState.chevron && !isReversePhaseA ? taglineChevronOpacity : 0,
+            pointerEvents: isTaglineInteractive ? 'auto' : 'none',
+          }}
+        >
+          <button
+            type="button"
+            className="hero-chevron-btn"
+            onClick={scrollToNext}
+            aria-label="Scroll down to What we are section"
+          >
+            <ArrowDown size={17} className="hero-chevron-icon" />
+          </button>
         </div>
       </section>
 
-      {/* ================= MAIN CONTENT ================= */}
-      <main>
-        {/* ================= LATEST ANNOUNCEMENTS SECTION (Right after Hero) ================= */}
-        <section id="announcements" className="content-section announcements-section">
-          <div className="section-container">
-            <div className="section-header">
-              <h2 className="section-title">Latest Announcements</h2>
-            </div>
+      {/* ================= 2. WHAT WE ARE ================= */}
+      <WhatWeAre
+        contentStyle={sectionAnimStyle || undefined}
+      />
 
-            <div className="announcements-list">
-              {announcementsData.map((ann) => {
-                const isExpanded = !!expandedAnnouncements[ann.id];
-                const isUpdate = ann.type === 'UPDATE';
+      {/* ================= 3. FEATURED EVENTS (3D COVERFLOW) ================= */}
+      <FeaturedEvents onNavigate={onNavigate} />
 
-                return (
-                  <div key={ann.id} className="announcement-card">
-                    {/* Left Square Date Box */}
-                    <div className="announcement-date-box">
-                      <span className="date-month">{ann.date.month}</span>
-                      <span className="date-day">{ann.date.day}</span>
-                    </div>
+      {/* ================= 4. LATEST ANNOUNCEMENTS ================= */}
+      <Announcements onNavigate={onNavigate} />
 
-                    {/* Main Content Area */}
-                    <div className="announcement-body">
-                      <div className="announcement-header-row">
-                        <h3 className="announcement-heading">{ann.title}</h3>
-                        {/* Corner Status Badge (UPDATE = Yellow, EVENT = Blue) */}
-                        <span
-                          className={`announcement-type-badge ${isUpdate ? 'badge-update-yellow' : 'badge-event-blue'
-                            }`}
-                        >
-                          {ann.type}
-                        </span>
-                      </div>
-
-                      <p className="announcement-preview">{ann.shortDesc}</p>
-
-                      {/* Expandable Content when Read More is Clicked */}
-                      {isExpanded && (
-                        <div className="announcement-expanded-content">
-                          <p className="announcement-full-desc">{ann.fullDesc}</p>
-                          {ann.linkText && (
-                            <a
-                              href={ann.linkUrl}
-                              className="announcement-action-btn"
-                              target={ann.linkUrl.startsWith('http') ? '_blank' : undefined}
-                              rel={ann.linkUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
-                              onClick={(e) => {
-                                if (ann.linkUrl.startsWith('#')) {
-                                  e.preventDefault();
-                                  scrollTo(ann.linkUrl.substring(1));
-                                }
-                              }}
-                            >
-                              {ann.linkText} →
-                            </a>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Read More / Read Less Toggle Button */}
-                      <button
-                        type="button"
-                        className="read-more-btn"
-                        onClick={() => toggleAnnouncement(ann.id)}
-                      >
-                        <span>{isExpanded ? 'Read less' : 'Read more'}</span>
-                        <svg
-                          className={`read-more-icon ${isExpanded ? 'rotate-180' : ''}`}
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* GALLERY SECTION (INTERACTIVE SCATTERED CANVAS) */}
-        <section id="gallery" className="content-section gallery-section">
-          <div className="section-container">
-            <ScatteredGallery />
-          </div>
-        </section>
-      </main>
-
-      {/* ================= FOOTER (Kept where it is) ================= */}
+      {/* ================= 6. FOOTER ================= */}
       <Footer onNavigate={onNavigate} />
     </div>
   );

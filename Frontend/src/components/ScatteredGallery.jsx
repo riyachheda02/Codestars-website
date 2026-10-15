@@ -57,6 +57,51 @@ export default function ScatteredGallery() {
     });
   }, []);
 
+  const getContentBounds = useCallback(() => {
+    const wrapper = containerRef.current?.closest('.scattered-gallery-wrapper');
+    const cards = containerRef.current?.querySelectorAll('.scattered-card');
+    if (!wrapper || !cards?.length) return null;
+
+    const scatterScale = Number.parseFloat(
+      window.getComputedStyle(wrapper).getPropertyValue('--scatter-scale')
+    ) || 1;
+
+    return Array.from(cards).reduce((bounds, card, index) => {
+      const photo = scatterItems[index];
+      const angle = Math.abs(photo.rot) * (Math.PI / 180);
+      const halfWidth = (card.offsetWidth * Math.cos(angle) + card.offsetHeight * Math.sin(angle)) / 2;
+      const halfHeight = (card.offsetWidth * Math.sin(angle) + card.offsetHeight * Math.cos(angle)) / 2;
+      const centerX = photo.x * scatterScale;
+      const centerY = photo.y * scatterScale;
+
+      return {
+        left: Math.min(bounds.left, centerX - halfWidth),
+        right: Math.max(bounds.right, centerX + halfWidth),
+        top: Math.min(bounds.top, centerY - halfHeight),
+        bottom: Math.max(bounds.bottom, centerY + halfHeight),
+      };
+    }, { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity });
+  }, [scatterItems]);
+
+  const constrainPan = useCallback((x, y, scale = zoom) => {
+    const bounds = getContentBounds();
+    const viewport = containerRef.current;
+    if (!bounds || !viewport) return { x, y };
+
+    const { width, height } = viewport.getBoundingClientRect();
+    const constrainAxis = (position, min, max, size) => {
+      const lowerLimit = size / 2 - max * scale;
+      const upperLimit = -size / 2 - min * scale;
+      if (lowerLimit > upperLimit) return -((min + max) / 2) * scale;
+      return Math.max(lowerLimit, Math.min(upperLimit, position));
+    };
+
+    return {
+      x: constrainAxis(x, bounds.left, bounds.right, width),
+      y: constrainAxis(y, bounds.top, bounds.bottom, height),
+    };
+  }, [getContentBounds, zoom]);
+
   // Keyboard navigation for lightbox
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -87,14 +132,8 @@ export default function ScatteredGallery() {
     const dy = e.clientY - dragStartRef.current.mouseY;
     dragDistanceRef.current = Math.hypot(dx, dy);
 
-    // Bounded pan range so user doesn't get lost in infinite void
-    const MAX_X = 1400;
-    const MAX_Y = 900;
-    const newX = Math.max(-MAX_X, Math.min(MAX_X, dragStartRef.current.panX + dx));
-    const newY = Math.max(-MAX_Y, Math.min(MAX_Y, dragStartRef.current.panY + dy));
-
-    setPan({ x: newX, y: newY });
-  }, [isDragging]);
+    setPan(constrainPan(dragStartRef.current.panX + dx, dragStartRef.current.panY + dy));
+  }, [constrainPan, isDragging]);
 
   const handleMouseUp = () => {
     setIsDragging(false);
@@ -123,13 +162,8 @@ export default function ScatteredGallery() {
     const dy = touch.clientY - dragStartRef.current.mouseY;
     dragDistanceRef.current = Math.hypot(dx, dy);
 
-    const MAX_X = 1400;
-    const MAX_Y = 900;
-    const newX = Math.max(-MAX_X, Math.min(MAX_X, dragStartRef.current.panX + dx));
-    const newY = Math.max(-MAX_Y, Math.min(MAX_Y, dragStartRef.current.panY + dy));
-
-    setPan({ x: newX, y: newY });
-  }, [isDragging]);
+    setPan(constrainPan(dragStartRef.current.panX + dx, dragStartRef.current.panY + dy));
+  }, [constrainPan, isDragging]);
 
   const handleTouchEnd = () => {
     setIsDragging(false);
@@ -155,11 +189,10 @@ export default function ScatteredGallery() {
 
   // Zoom controls
   const handleZoom = (delta) => {
+    const nextZoom = Math.max(0.65, Math.min(1.25, +(zoom + delta).toFixed(2)));
     setIsTransitioning(true);
-    setZoom((prev) => {
-      const next = Math.max(0.65, Math.min(1.25, +(prev + delta).toFixed(2)));
-      return next;
-    });
+    setPan((current) => constrainPan(current.x, current.y, nextZoom));
+    setZoom(nextZoom);
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
@@ -167,11 +200,6 @@ export default function ScatteredGallery() {
     <div className="scattered-gallery-wrapper">
       {/* Top Header Bar with Filter Tabs & Eyebrow */}
       <div className="scattered-topbar">
-        <div className="topbar-meta">
-          <span className="section-eyebrow">ARCHIVES</span>
-          <h2 className="section-title">Moments & Highlights</h2>
-        </div>
-
         <div className="gallery-filter-tabs">
           {['ALL', '2026', '2025'].map((filter) => (
             <button
@@ -279,7 +307,7 @@ export default function ScatteredGallery() {
               <svg width="22" height="28" viewBox="0 0 28 34" fill="none">
                 <ellipse cx="14" cy="30" rx="8" ry="2.5" fill="rgba(0,0,0,0.3)" />
                 <path d="M14 18L14 29" stroke="#aaa" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="14" cy="12" r="9" fill="#ffa600" />
+                <circle cx="14" cy="12" r="9" fill="#F5B93A" />
                 <circle cx="11" cy="9" r="2" fill="#fff" />
               </svg>
             </div>

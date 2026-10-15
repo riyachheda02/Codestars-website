@@ -1,0 +1,101 @@
+/* Events Page Header Compact: about 34vh tall (minimum 240px) with top padding clearing navbar */
+.events-header-compact {
+  position: relative;
+  min-height: max(34vh, 240px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 104px 24px 32px;
+  overflow: hidden;
+  background-color: var(--bg);
+}
+
+.events-header-starfield-wrap {
+  position: absolute;
+  inset: 0;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.events-header-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 600px;
+  height: 320px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse,
+    rgba(255, 166, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.6) 45%,
+    transparent 70%
+  );
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.events-header-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.events-head-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.events-display-title {
+  font-family: var(--font-heading);
+  font-size: clamp(36px, 5.2vw, 64px);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text);
+  text-shadow: 0 0 24px var(--glow), 0 0 45px rgba(255, 166, 0, 0.25);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.events-title-underline {
+  width: 68px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold) 50%,
+    transparent 100%
+  );
+  margin-top: 14px;
+  border-radius: 9999px;
+  box-shadow: 0 0 10px rgba(255, 166, 0, 0.7);
+}
+
+.events-display-subtitle {
+  font-family: var(--font-serif);
+  font-size: clamp(15px, 1.8vw, 20px);
+  font-style: italic;
+  color: var(--muted);
+  max-width: 680px;
+  margin-top: 14px;
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .events-header-compact {
+    padding-top: 96px;
+    padding-bottom: 28px;
+    min-height: max(30vh, 220px);
+  }
+}

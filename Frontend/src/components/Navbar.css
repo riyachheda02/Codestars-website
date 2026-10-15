@@ -1,389 +1,467 @@
 /* =========================================================
-   DJS CODESTARS — GLOBAL STICKY NAVBAR COMPONENT
-   Consistent navigation across all pages (Home, Events, Resources, Team)
-   Sticky at top: stays visible while scrolling
+   CODESTARS REFINED FLOATING GLASS NAVBAR (EXPANDING PILL)
    ========================================================= */
 
-.app-navbar-sticky {
+.codestars-navbar-pill {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  width: 100%;
-  z-index: 10001;
+  z-index: 1000;
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  padding: 14px 44px;
+  width: 100%;
+  max-width: none;
+  padding: 12px 24px;
+  border-radius: 0;
   background: transparent;
-  border-bottom: 0;
-  box-sizing: border-box;
+  border: 0;
+  box-shadow: none;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    top 0.3s ease,
+    transform 350ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 350ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  user-select: none;
 }
 
-/* A single title is animated by scroll from the hero to this nav position. */
-.app-scroll-title {
-  position: fixed;
-  z-index: 10002;
-  display: block;
-  width: max-content;
-  max-width: calc(100vw - 32px);
-  color: #ffa600;
-  font-family: var(--font-display, var(--font-main, sans-serif));
-  font-weight: 900;
-  line-height: 0.78;
-  text-decoration: none;
-  text-align: center;
-  text-shadow: 0 0 38px rgba(255, 166, 0, 0.25);
-  will-change: top, font-size, letter-spacing;
-  /* The moving title must never block the hero's cursor/photo interaction. */
+.codestars-navbar-pill.is-hidden-intro {
+  transform: translateY(-10px);
+  opacity: 0;
   pointer-events: none;
-  transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
-/* Only the compact navbar title is interactive. The large hero title stays
-   transparent to pointer movement so the poster trail never pauses. */
-.app-scroll-title.is-docked {
-  pointer-events: auto;
+/* Auto-hide state on inner pages: translateY(calc(-100% - 24px)) plus opacity 0 over 350ms */
+.codestars-navbar-pill.is-nav-scroll-hidden {
+  transform: translateY(calc(-100% - 24px));
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    top 0.3s ease,
+    transform 350ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 350ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    visibility 0s linear 350ms;
 }
 
-.app-scroll-title > span:first-child {
-  font-family: var(--font-main, 'Plus Jakarta Sans', sans-serif);
-  font-size: 0.59em;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  line-height: 1;
+.codestars-navbar-pill.is-scrolled {
+  top: 0;
+  background: rgba(0, 0, 0, 0.92);
+  border-bottom: 1px solid rgba(255, 166, 0, 0.2);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.06);
 }
 
-.app-scroll-title span {
-  display: block;
+.codestars-navbar-pill.is-inner-page {
+  background: rgba(0, 0, 0, 0.88);
+  border-bottom: 1px solid rgba(255, 166, 0, 0.2);
 }
 
-/* Isometra is applied only when its licensed webfont file is supplied. */
-.app-scroll-title-codestars {
-  font-family: 'Isometra', 'Trebuchet MS', var(--font-display, sans-serif);
-  font-size: 1em;
-  font-weight: 900;
-  line-height: 0.82;
-}
-
-.app-scroll-title.is-docked > span:first-child {
-  font-size: 0.72em;
-}
-
-.app-scroll-title:hover {
-  color: #ffd27a;
-  text-shadow: 0 0 18px rgba(255, 166, 0, 0.65);
-}
-
-/* ─── Left: Brand ─── */
-.app-nav-brand {
-  display: flex;
-  align-items: center;
+/* Glass filter layers */
+.navbar-pill-glass-filter {
   position: absolute;
-  left: 44px;
-  top: 50%;
-  z-index: 10004;
-  transform: translateY(-50%);
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  pointer-events: none;
+  z-index: 0;
 }
 
-.app-nav-brand a {
-  font-family: var(--font-display, var(--font-main, 'Plus Jakarta Sans', sans-serif));
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #ffffff;
-  text-decoration: none;
-  transition: color 0.2s ease, text-shadow 0.2s ease;
+.navbar-pill-glass-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    170deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.01) 40%,
+    rgba(255, 166, 0, 0.05) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
 }
 
-.app-nav-brand a:hover {
-  color: #ffa600;
-  text-shadow: 0 0 16px rgba(255, 166, 0, 0.4);
+.navbar-pill-glass-specular {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1.5px 0.5px rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  z-index: 2;
 }
 
-/* ─── Center: Menu with Logo ─── */
-.app-nav-center {
+.navbar-pill-inner {
+  position: relative;
+  z-index: 3;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) calc(var(--title-slot, 0px) + 28px) minmax(0, 1fr);
+  grid-template-columns: 1fr var(--nav-logo-slot-width, 0px) 1fr;
+  column-gap: 20px;
   align-items: center;
-  width: min(100%, 900px);
+  width: min(960px, calc(100vw - 32px));
+  margin: 0 auto;
 }
 
-.app-nav-title-slot {
-  width: calc(var(--title-slot, 0px) + 28px);
-  height: 30px;
-  transition: width 70ms linear;
-}
+/* =========================================================
+   LOGO SLOT: EXPANDS DYNAMICALLY
+   At rest on Home page: width is 0px, overflow is hidden
+   On scroll: animates/expands from 0 to 98px
+   ========================================================= */
 
-.app-nav-side {
+.navbar-logo-slot-expanding {
+  grid-column: 2;
+  height: 44px;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: var(--nav-gap, 13px);
+  justify-content: center;
+  flex-shrink: 0;
+  transition: width 0.08s linear, opacity 0.2s ease;
+  position: relative;
   min-width: 0;
 }
 
-.app-nav-side-left {
+.navbar-docked-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  width: 98px;
+  padding-left: 0;
+  pointer-events: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.navbar-logo-djs {
+  font-family: var(--font-hero);
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 2px;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255, 166, 0, 0.45);
+}
+
+.navbar-logo-codestars {
+  font-family: var(--font-hero);
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 14px rgba(255, 166, 0, 0.45);
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.navbar-docked-logo:hover .navbar-logo-codestars {
+  color: var(--gold-bright);
+  text-shadow: 0 0 16px rgba(255, 184, 52, 0.8);
+}
+
+/* =========================================================
+   NAV ITEMS GROUP (Desktop)
+   ========================================================= */
+
+.navbar-items-group {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+}
+
+.navbar-items-group-left {
+  grid-column: 1;
   justify-content: flex-end;
 }
 
-.app-nav-side-right {
+.navbar-items-group-right {
+  grid-column: 3;
   justify-content: flex-start;
 }
 
-.app-nav-link {
-  font-family: var(--font-main, 'Plus Jakarta Sans', sans-serif);
+.navbar-item-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-nav-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+  min-width: 0;
+  text-decoration: none;
+  border-radius: 0;
+  background: transparent;
+  transition: transform 0.16s ease;
+  position: relative;
+  outline: none;
+}
+
+.navbar-nav-btn:hover {
+  transform: translateY(-1px);
+}
+
+.navbar-nav-btn:active {
+  transform: scale(0.94);
+}
+
+.navbar-nav-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.navbar-icon-box {
+  display: none;
+}
+
+.navbar-icon {
+  position: relative;
+  z-index: 2;
+  color: var(--muted);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.navbar-nav-btn:hover .navbar-icon {
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.navbar-active-glow-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  border: 1px solid rgba(245, 185, 58, 0.45);
+  box-shadow:
+    0 0 16px rgba(245, 185, 58, 0.32),
+    inset 0 1px 1px rgba(245, 185, 58, 0.5);
+  z-index: 1;
+}
+
+.navbar-nav-btn.is-active .navbar-icon {
+  color: var(--gold);
+}
+
+/* Page name directly below icon in small text */
+.navbar-item-label {
+  font-family: var(--font-body);
+  font-size: 13px;
   font-weight: 500;
-  font-size: 13.5px;
   letter-spacing: 0.03em;
   color: #d0d0d8;
-  text-decoration: none;
-  position: relative;
-  padding: 6px 0;
-  transition: color 0.2s ease;
+  line-height: 1.2;
+  margin-top: 0;
   white-space: nowrap;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+  transition: color 0.2s ease;
 }
 
-.app-nav-link:hover {
+.navbar-nav-btn:hover .navbar-item-label {
   color: #ffffff;
 }
 
-/* Active page indicator */
-.app-nav-link.active {
-  color: #ffffff;
-  font-weight: 700;
+.navbar-nav-btn.is-active .navbar-item-label {
+  color: var(--gold);
+  font-weight: 600;
 }
 
-.app-nav-link.active::after {
+.navbar-nav-btn.is-active::after {
   content: '';
   position: absolute;
+  right: 0;
   bottom: -2px;
   left: 0;
-  right: 0;
   height: 2px;
-  background: #ffa600;
-  box-shadow: 0 0 10px rgba(255, 166, 0, 0.85);
   border-radius: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(255, 166, 0, 0.7);
 }
 
-/* Center circular CodeStars logo */
-.app-nav-logo-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #000000;
-  border: 2px solid rgba(255, 166, 0, 0.45);
-  box-shadow: 0 0 16px rgba(255, 166, 0, 0.25);
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  flex-shrink: 0;
-  text-decoration: none;
-}
+/* =========================================================
+   MOBILE DOCK (Bottom Bar for <= 640px)
+   ========================================================= */
 
-.app-nav-logo-circle:hover {
-  transform: translateY(-50%) scale(1.08);
-  border-color: #ffa600;
-  box-shadow: 0 0 22px rgba(255, 166, 0, 0.5);
-}
-
-.app-nav-logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* ─── Right: Controls ─── */
-.app-nav-right {
-  position: absolute;
-  right: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.app-nav-menu-toggle {
+.codestars-mobile-dock {
   display: none;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
 }
 
-/* Year switcher */
-.app-nav-year-switcher {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.app-year-label {
-  font-family: var(--font-mono, monospace);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: #606070;
-}
-
-.app-year-toggle-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.app-year-btn {
-  background: none;
-  border: none;
-  color: #727284;
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.app-year-btn:hover {
-  color: #ffffff;
-}
-
-.app-year-btn.active {
-  color: #ffa600;
-  font-weight: 800;
-  text-shadow: 0 0 10px rgba(255, 166, 0, 0.4);
-}
-
-.app-year-divider {
-  color: #383844;
-  font-size: 11px;
-}
-
-/* Back to Home Button */
-.app-nav-back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #ffa600;
-  background: rgba(255, 166, 0, 0.08);
-  border: 1px solid rgba(255, 166, 0, 0.25);
-  padding: 7px 14px;
-  border-radius: 100px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.app-nav-back-btn:hover {
-  background: #ffa600;
-  color: #080808;
-  transform: translateX(-2px);
-  box-shadow: 0 0 16px rgba(255, 166, 0, 0.4);
-}
-
-/* ─── Responsive Media Queries ─── */
-@media (max-width: 960px) {
-  .app-navbar-sticky {
-    padding: 12px 20px;
+@media (max-width: 640px) {
+  /* Minimal top bar on mobile for logo merge */
+  .codestars-navbar-pill {
+    top: 0;
+    width: 100%;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.88);
+    border-bottom: 1px solid rgba(255, 166, 0, 0.2);
   }
 
-  .app-nav-side {
-    gap: 11px;
-  }
-}
-
-@media (max-width: 780px) {
-  .app-navbar-sticky {
+  .navbar-pill-inner {
     display: flex;
     justify-content: center;
-    padding: 10px 16px;
-    gap: 9px;
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  .navbar-logo-slot-expanding {
+    min-width: unset;
+  }
+
+  .navbar-items-group {
+    display: none;
+  }
+
+  /* Fixed bottom dock with 6 items, fitting at 360px */
+  .codestars-mobile-dock {
     position: fixed;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(100vw - 16px);
+    max-width: 440px;
+    padding: 6px 4px;
+    border-radius: 9999px;
+    background: rgba(12, 18, 32, 0.94);
+    border: 1px solid var(--border);
+    box-shadow:
+      0 12px 35px rgba(0, 0, 0, 0.9),
+      inset 0 1px 1px rgba(255, 255, 255, 0.18);
+    transition:
+      transform 350ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 350ms cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
-  .app-nav-brand {
-    left: 16px;
-    top: 10px;
-    transform: none;
+  .codestars-mobile-dock.is-dock-scroll-hidden {
+    transform: translate(-50%, calc(100% + 24px));
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition:
+      transform 350ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 350ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      visibility 0s linear 350ms;
   }
 
-  .app-nav-logo-circle:hover {
-    transform: scale(1.08);
-  }
-
-  .app-nav-menu-toggle {
-    display: inline-flex;
+  .mobile-dock-glass-filter {
     position: absolute;
-    right: 16px;
+    inset: 0;
+    border-radius: inherit;
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    pointer-events: none;
   }
 
-  .app-nav-center {
-    display: none;
+  .mobile-dock-glass-overlay {
     position: absolute;
-    top: calc(100% + 1px);
-    left: 0;
-    right: 0;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
+    pointer-events: none;
+  }
+
+  .mobile-dock-inner {
+    position: relative;
     z-index: 2;
-    display: none;
-    align-items: stretch;
-    gap: 0;
-    padding: 8px 16px 14px;
-    background: rgba(8, 8, 12, 0.98);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 18px 28px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 2px;
   }
 
-  .app-nav-center.is-open {
-    display: block;
-  }
-
-  .app-nav-side {
+  .mobile-dock-btn {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 0;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    padding: 3px 0;
+    min-width: 46px;
+    border-radius: 8px;
+    transition: transform 0.15s ease;
   }
 
-  .app-nav-link {
-    padding: 11px 4px;
-    font-size: 14px;
+  .mobile-dock-btn:active {
+    transform: scale(0.92);
   }
 
-  .app-nav-title-slot {
-    display: none;
+  .mobile-icon-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
   }
 
-  .app-scroll-title {
-    max-width: calc(100vw - 104px);
+  .mobile-dock-icon {
+    position: relative;
+    z-index: 2;
+    color: var(--muted);
+    transition: color 0.15s ease;
+  }
+
+  .mobile-active-indicator {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--gold-soft);
+    border: 1px solid rgba(245, 185, 58, 0.45);
+    box-shadow: 0 0 10px rgba(245, 185, 58, 0.35);
+    z-index: 1;
+  }
+
+  .mobile-dock-btn.is-active .mobile-dock-icon {
+    color: var(--gold);
+  }
+
+  .mobile-dock-label {
+    font-size: 10px;
+    line-height: 1.1;
+    color: var(--muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .mobile-dock-btn.is-active .mobile-dock-label {
+    color: var(--gold);
+    font-weight: 600;
   }
 }
 
-@media (max-width: 380px) {
-  .app-navbar-sticky {
-    padding-inline: 12px;
+/* prefers-reduced-motion: 150ms opacity fade only */
+@media (prefers-reduced-motion: reduce) {
+  .codestars-navbar-pill,
+  .codestars-navbar-pill.is-nav-scroll-hidden,
+  .codestars-mobile-dock,
+  .codestars-mobile-dock.is-dock-scroll-hidden {
+    transition: opacity 150ms ease, visibility 0s linear 150ms !important;
   }
 
-  .app-nav-back-btn {
-    padding: 8px 9px;
+  .codestars-navbar-pill.is-nav-scroll-hidden {
+    transform: translateY(calc(-100% - 24px)) !important;
   }
 
-  .app-nav-back-btn span {
-    display: none;
+  .codestars-mobile-dock.is-dock-scroll-hidden {
+    transform: translateX(-50%) !important;
   }
 }

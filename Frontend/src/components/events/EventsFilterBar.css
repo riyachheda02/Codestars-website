@@ -1,0 +1,200 @@
+/* Minimal Filter Bar: NOT sticky, scrolls away with page, never overlays timeline or footer */
+.events-filter-bar-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto 40px;
+  padding: 0 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  z-index: 50;
+}
+
+/* Centered glass pill containing segmented control and year dropdown */
+.events-filter-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(12, 18, 32, 0.85);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  box-sizing: border-box;
+  max-width: 100%;
+  z-index: 50;
+}
+
+/* Hairline divider */
+.filter-pill-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(245, 185, 58, 0.25);
+  flex-shrink: 0;
+}
+
+/* Status Segmented Control */
+.filter-status-seg {
+  display: flex;
+  align-items: center;
+  background: rgba(7, 10, 18, 0.7);
+  padding: 3px;
+  border-radius: 9999px;
+  border: 1px solid rgba(245, 185, 58, 0.12);
+}
+
+.filter-seg-option {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-seg-option:hover {
+  color: #ffffff;
+}
+
+.filter-seg-option.is-active {
+  background: var(--gold);
+  color: #070A12;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(245, 185, 58, 0.4);
+}
+
+.filter-seg-option:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Year Dropdown listbox wrap */
+.filter-year-dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.filter-year-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(18, 27, 48, 0.65);
+  border: 1px solid rgba(245, 185, 58, 0.2);
+  border-radius: 9999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-year-dropdown-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+.filter-year-dropdown-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.dropdown-chevron {
+  color: var(--gold);
+  transition: transform 0.2s ease;
+}
+
+.dropdown-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+/* Popover glass listbox */
+.filter-year-listbox {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 120px;
+  background: rgba(12, 18, 32, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  list-style: none;
+  margin: 0;
+  z-index: 50;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.8),
+    0 0 16px rgba(245, 185, 58, 0.12);
+}
+
+.filter-year-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-year-option:hover,
+.filter-year-option:focus {
+  background: rgba(245, 185, 58, 0.12);
+  color: var(--gold-bright);
+  outline: none;
+}
+
+.filter-year-option.is-selected {
+  color: var(--gold);
+  font-weight: 700;
+  background: rgba(245, 185, 58, 0.16);
+}
+
+.option-check-icon {
+  color: var(--gold);
+}
+
+/* Below 480px: pill wraps into two centered rows if needed */
+@media (max-width: 480px) {
+  .events-filter-pill {
+    flex-wrap: wrap;
+    justify-content: center;
+    border-radius: 20px;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .filter-pill-divider {
+    display: none;
+  }
+
+  .filter-seg-option {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .filter-year-dropdown-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}
